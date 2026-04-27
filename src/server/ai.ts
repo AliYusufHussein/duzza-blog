@@ -1,10 +1,20 @@
-import { createServerFn } from "@tanstack/react-start";
+import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { supabase } from "@/integrations/supabase/client";
+
+const attachAuth = createMiddleware({ type: "function" }).client(async ({ next }) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  return next({
+    headers: session?.access_token
+      ? { Authorization: `Bearer ${session.access_token}` }
+      : {},
+  });
+});
 
 type AiInput = { system: string; user: string; model?: string };
 
 export const callAI = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
+  .middleware([attachAuth, requireSupabaseAuth])
   .inputValidator((input: AiInput) => {
     if (!input || typeof input.system !== "string" || typeof input.user !== "string") {
       throw new Error("Invalid input");
