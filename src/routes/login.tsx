@@ -27,7 +27,21 @@ function LoginPage() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    if (!email.trim() || !password) return setError("Please fill in all fields.");
+    if (!email.trim()) return setError("Please enter your email.");
+    if (mode === "forgot") {
+      setBusy(true);
+      try {
+        const { error: err } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
+        if (err) setError(err.message);
+        else toast.success("Check your email for a reset link.");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+    if (!password) return setError("Please fill in all fields.");
     if (mode === "register") {
       if (password.length < 6) return setError("Password must be at least 6 characters.");
       if (password !== confirm) return setError("Passwords do not match.");
