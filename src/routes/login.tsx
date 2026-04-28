@@ -93,16 +93,18 @@ function LoginPage() {
                 autoComplete="email"
               />
             </Field>
-            <Field label="Password">
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
-                className={inputClass}
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-              />
-            </Field>
+            {mode !== "forgot" && (
+              <Field label="Password">
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className={inputClass}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                />
+              </Field>
+            )}
             {mode === "register" && (
               <Field label="Confirm Password">
                 <input
@@ -115,13 +117,35 @@ function LoginPage() {
                 />
               </Field>
             )}
+            {mode === "login" && (
+              <div className="mb-3 text-right">
+                <button
+                  type="button"
+                  onClick={() => { setMode("forgot"); setError(""); }}
+                  className="text-xs text-accent hover:underline"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             {error && <div className="mb-3 text-xs text-destructive">⚠ {error}</div>}
             {busy ? (
-              <Spinner label={mode === "login" ? "Signing in..." : "Creating account..."} />
+              <Spinner label={mode === "forgot" ? "Sending reset link..." : mode === "login" ? "Signing in..." : "Creating account..."} />
             ) : (
               <BfButton type="submit" className="w-full">
-                {mode === "login" ? "Sign In →" : "Create Account →"}
+                {mode === "forgot" ? "Send Reset Link →" : mode === "login" ? "Sign In →" : "Create Account →"}
               </BfButton>
+            )}
+            {mode === "forgot" && (
+              <div className="mt-3 text-center">
+                <button
+                  type="button"
+                  onClick={() => { setMode("login"); setError(""); }}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  ← Back to sign in
+                </button>
+              </div>
             )}
           </form>
         </Card>
