@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { supabase } from "@/integrations/supabase/client";
 import { BfButton, Card, Field, Spinner, inputClass } from "@/components/bf-ui";
 import { toast } from "sonner";
 
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/login")({
 function LoginPage() {
   const { user, signIn, signUp, loading } = useAuth();
   const nav = useNavigate();
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
