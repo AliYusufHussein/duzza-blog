@@ -219,11 +219,35 @@ function EditorPage() {
     const content = repurposed[activePlatform]?.content;
     if (!content) return;
     try {
-      await navigator.clipboard.writeText(content);
+      await copyText(content);
       setRepurposeCopied(true);
       setTimeout(() => setRepurposeCopied(false), 2000);
     } catch {
       toast.error("Could not copy");
+    }
+  }
+
+  async function exportRepurposed(kind: "txt" | "docx" | "pdf" | "carousel") {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return toast.error("Generate this platform first");
+    const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
+    const baseName = `${title || "article"}-${activePlatform}`;
+    try {
+      if (kind === "txt") {
+        const { downloadText } = await import("@/lib/exporters");
+        downloadText(`${baseName}.txt`, content);
+      } else if (kind === "docx") {
+        await downloadDocxFromText(baseName, `${title || "Article"} — ${platformLabel}`, content);
+      } else if (kind === "pdf") {
+        downloadPdfFromText(baseName, `${title || "Article"} — ${platformLabel}`, content);
+      } else if (kind === "carousel") {
+        const n = await downloadCarouselZip(baseName, content);
+        toast.success(`Exported ${n} slide images`);
+        return;
+      }
+      toast.success(`Downloaded ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   }
 
