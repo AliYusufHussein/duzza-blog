@@ -160,6 +160,45 @@ function EditorPage() {
     }
   }
 
+  async function runRepurpose(platform: PlatformId) {
+    const source = formatted || polished || draft;
+    if (!source.trim()) {
+      toast.error("Nothing to repurpose yet — finish earlier steps first.");
+      return;
+    }
+    const platformLabel = PLATFORMS.find((p) => p.id === platform)?.label ?? platform;
+    setAiBusy(`Repurposing for ${platformLabel}...`);
+    try {
+      const text = await runAI(
+        PLATFORM_PROMPTS[platform],
+        `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
+      );
+      const next: RepurposedMap = {
+        ...repurposed,
+        [platform]: { content: text, generatedAt: new Date().toISOString() },
+      };
+      setRepurposed(next);
+      await saveMut.mutateAsync({ ...buildPatch(), repurposed: next as never });
+      toast.success(`${platformLabel} ready`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
+  async function copyRepurposed() {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return;
+    try {
+      await navigator.clipboard.writeText(content);
+      setRepurposeCopied(true);
+      setTimeout(() => setRepurposeCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+
   if (authLoading || isLoading || !article) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
