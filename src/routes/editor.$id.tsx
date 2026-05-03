@@ -449,6 +449,9 @@ function EditorPage() {
               <BfButton variant={copied ? "success" : "primary"} onClick={copyHTML}>
                 {copied ? "✓ Copied!" : "Copy HTML"}
               </BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("html")}>⬇ HTML</BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("docx")}>⬇ DOCX</BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("pdf")}>⬇ PDF</BfButton>
               <BfButton onClick={() => { setStep(4); persist({ step: 4 }, true); }}>Repurpose →</BfButton>
               <BfButton variant="ghost" onClick={() => persist({ status: "published" })}>Mark as Published</BfButton>
               <BfButton variant="ghost" onClick={() => setStep(2)}>← Back</BfButton>
