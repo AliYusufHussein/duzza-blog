@@ -164,11 +164,27 @@ function EditorPage() {
 
   async function copyHTML() {
     try {
-      await navigator.clipboard.writeText(formatted ?? "");
+      await copyHtml(formatted ?? "");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Could not copy");
+    }
+  }
+
+  function articleBaseName() {
+    return title || "blog-article";
+  }
+
+  async function exportArticle(kind: "html" | "docx" | "pdf") {
+    if (!formatted) return toast.error("Generate the Blogger HTML first");
+    try {
+      if (kind === "html") downloadHtmlFile(articleBaseName(), formatted, title || "Article");
+      else if (kind === "docx") await downloadDocxFromHtml(articleBaseName(), title, formatted);
+      else downloadPdfFromHtml(articleBaseName(), title, formatted);
+      toast.success(`Downloaded ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   }
 
