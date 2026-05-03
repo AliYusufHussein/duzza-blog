@@ -7,6 +7,18 @@ import { runAI } from "@/lib/ai-client";
 import { BfButton, Card, Field, Spinner, inputClass } from "@/components/bf-ui";
 import { toast } from "sonner";
 import { PLATFORMS, PLATFORM_PROMPTS, type PlatformId, type RepurposedMap } from "@/lib/repurpose-prompts";
+import {
+  copyText,
+  copyHtml,
+  downloadHtmlFile,
+  downloadDocxFromHtml,
+  downloadDocxFromText,
+  downloadPdfFromHtml,
+  downloadPdfFromText,
+  downloadCarouselZip,
+} from "@/lib/exporters";
+
+const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
 const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
@@ -152,11 +164,27 @@ function EditorPage() {
 
   async function copyHTML() {
     try {
-      await navigator.clipboard.writeText(formatted ?? "");
+      await copyHtml(formatted ?? "");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
       toast.error("Could not copy");
+    }
+  }
+
+  function articleBaseName() {
+    return title || "blog-article";
+  }
+
+  async function exportArticle(kind: "html" | "docx" | "pdf") {
+    if (!formatted) return toast.error("Generate the Blogger HTML first");
+    try {
+      if (kind === "html") downloadHtmlFile(articleBaseName(), formatted, title || "Article");
+      else if (kind === "docx") await downloadDocxFromHtml(articleBaseName(), title, formatted);
+      else downloadPdfFromHtml(articleBaseName(), title, formatted);
+      toast.success(`Downloaded ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   }
 
@@ -191,11 +219,35 @@ function EditorPage() {
     const content = repurposed[activePlatform]?.content;
     if (!content) return;
     try {
-      await navigator.clipboard.writeText(content);
+      await copyText(content);
       setRepurposeCopied(true);
       setTimeout(() => setRepurposeCopied(false), 2000);
     } catch {
       toast.error("Could not copy");
+    }
+  }
+
+  async function exportRepurposed(kind: "txt" | "docx" | "pdf" | "carousel") {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return toast.error("Generate this platform first");
+    const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
+    const baseName = `${title || "article"}-${activePlatform}`;
+    try {
+      if (kind === "txt") {
+        const { downloadText } = await import("@/lib/exporters");
+        downloadText(`${baseName}.txt`, content);
+      } else if (kind === "docx") {
+        await downloadDocxFromText(baseName, `${title || "Article"} — ${platformLabel}`, content);
+      } else if (kind === "pdf") {
+        downloadPdfFromText(baseName, `${title || "Article"} — ${platformLabel}`, content);
+      } else if (kind === "carousel") {
+        const n = await downloadCarouselZip(baseName, content);
+        toast.success(`Exported ${n} slide images`);
+        return;
+      }
+      toast.success(`Downloaded ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error((e as Error).message);
     }
   }
 
@@ -397,6 +449,9 @@ function EditorPage() {
               <BfButton variant={copied ? "success" : "primary"} onClick={copyHTML}>
                 {copied ? "✓ Copied!" : "Copy HTML"}
               </BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("html")}>⬇ HTML</BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("docx")}>⬇ DOCX</BfButton>
+              <BfButton variant="outline" onClick={() => exportArticle("pdf")}>⬇ PDF</BfButton>
               <BfButton onClick={() => { setStep(4); persist({ step: 4 }, true); }}>Repurpose →</BfButton>
               <BfButton variant="ghost" onClick={() => persist({ status: "published" })}>Mark as Published</BfButton>
               <BfButton variant="ghost" onClick={() => setStep(2)}>← Back</BfButton>
@@ -443,9 +498,19 @@ function EditorPage() {
                     {repurposed[activePlatform] ? "↻ Regenerate" : "✦ Generate"}
                   </BfButton>
                   {repurposed[activePlatform] && (
-                    <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
-                      {repurposeCopied ? "✓ Copied!" : "Copy"}
-                    </BfButton>
+                    <>
+                      <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
+                        {repurposeCopied ? "✓ Copied!" : "Copy"}
+                      </BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("txt")}>⬇ TXT</BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("docx")}>⬇ DOCX</BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("pdf")}>⬇ PDF</BfButton>
+                      {CAROUSEL_PLATFORMS.includes(activePlatform) && (
+                        <BfButton variant="outline" onClick={() => exportRepurposed("carousel")}>
+                          🎞 Slide Images (.zip)
+                        </BfButton>
+                      )}
+                    </>
                   )}
                 </>
               )}
