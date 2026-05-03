@@ -397,9 +397,78 @@ function EditorPage() {
               <BfButton variant={copied ? "success" : "primary"} onClick={copyHTML}>
                 {copied ? "✓ Copied!" : "Copy HTML"}
               </BfButton>
+              <BfButton onClick={() => { setStep(4); persist({ step: 4 }, true); }}>Repurpose →</BfButton>
               <BfButton variant="ghost" onClick={() => persist({ status: "published" })}>Mark as Published</BfButton>
               <BfButton variant="ghost" onClick={() => setStep(2)}>← Back</BfButton>
             </div>
+          </div>
+        )}
+
+        {/* STEP 4 — Repurpose */}
+        {step === 4 && (
+          <div>
+            <h2 className="font-display text-xl mb-1">Repurpose for Other Platforms</h2>
+            <div className="text-xs text-muted-foreground mb-4">
+              Turn this article into publish-ready content for any channel
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-5">
+              {PLATFORMS.map((p) => {
+                const has = !!repurposed[p.id];
+                const active = activePlatform === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setActivePlatform(p.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                      active
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/60"
+                    }`}
+                  >
+                    <span className="font-mono text-[11px]">{p.emoji}</span>
+                    <span>{p.label}</span>
+                    {has && <span className="text-success">●</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              {aiBusy ? (
+                <Spinner label={aiBusy} />
+              ) : (
+                <>
+                  <BfButton onClick={() => runRepurpose(activePlatform)}>
+                    {repurposed[activePlatform] ? "↻ Regenerate" : "✦ Generate"}
+                  </BfButton>
+                  {repurposed[activePlatform] && (
+                    <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
+                      {repurposeCopied ? "✓ Copied!" : "Copy"}
+                    </BfButton>
+                  )}
+                </>
+              )}
+              <BfButton variant="ghost" onClick={() => setStep(3)}>← Back</BfButton>
+            </div>
+
+            {repurposed[activePlatform] ? (
+              <Card className="p-0">
+                <pre className="m-0 max-h-[520px] overflow-y-auto whitespace-pre-wrap p-4 text-[13px] leading-relaxed text-foreground font-sans">
+                  {repurposed[activePlatform]?.content}
+                </pre>
+              </Card>
+            ) : (
+              <Card>
+                <div className="text-sm text-muted-foreground">
+                  No content yet for{" "}
+                  <span className="text-accent">
+                    {PLATFORMS.find((p) => p.id === activePlatform)?.label}
+                  </span>
+                  . Click Generate to create a publish-ready version.
+                </div>
+              </Card>
+            )}
           </div>
         )}
       </main>
