@@ -7,6 +7,18 @@ import { runAI } from "@/lib/ai-client";
 import { BfButton, Card, Field, Spinner, inputClass } from "@/components/bf-ui";
 import { toast } from "sonner";
 import { PLATFORMS, PLATFORM_PROMPTS, type PlatformId, type RepurposedMap } from "@/lib/repurpose-prompts";
+import {
+  copyText,
+  copyHtml,
+  downloadHtmlFile,
+  downloadDocxFromHtml,
+  downloadDocxFromText,
+  downloadPdfFromHtml,
+  downloadPdfFromText,
+  downloadCarouselZip,
+} from "@/lib/exporters";
+
+const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
 const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
