@@ -6,8 +6,9 @@ import { getArticle, updateArticle, type SeoData } from "@/lib/articles";
 import { runAI } from "@/lib/ai-client";
 import { BfButton, Card, Field, Spinner, inputClass } from "@/components/bf-ui";
 import { toast } from "sonner";
+import { PLATFORMS, PLATFORM_PROMPTS, type PlatformId, type RepurposedMap } from "@/lib/repurpose-prompts";
 
-const STEPS = ["Polish", "SEO", "Format", "Preview"];
+const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
 const CATEGORIES = ["Tech", "Lifestyle", "Travel", "Food", "Business", "Health", "Finance", "Other"];
 
@@ -41,8 +42,11 @@ function EditorPage() {
   const [polished, setPolished] = useState<string | null>(null);
   const [seo, setSeo] = useState<SeoData | null>(null);
   const [formatted, setFormatted] = useState<string | null>(null);
+  const [repurposed, setRepurposed] = useState<RepurposedMap>({});
+  const [activePlatform, setActivePlatform] = useState<PlatformId>("twitter");
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [repurposeCopied, setRepurposeCopied] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -56,6 +60,7 @@ function EditorPage() {
       setPolished(article.polished);
       setSeo((article.seo_data as SeoData | null) ?? null);
       setFormatted(article.formatted);
+      setRepurposed(((article as { repurposed?: RepurposedMap }).repurposed) ?? {});
       setHydrated(true);
     }
   }, [article, hydrated]);
@@ -79,6 +84,7 @@ function EditorPage() {
       polished,
       seo_data: seo as never,
       formatted,
+      repurposed: repurposed as never,
       step,
       ...extra,
     };
@@ -149,6 +155,45 @@ function EditorPage() {
       await navigator.clipboard.writeText(formatted ?? "");
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error("Could not copy");
+    }
+  }
+
+  async function runRepurpose(platform: PlatformId) {
+    const source = formatted || polished || draft;
+    if (!source.trim()) {
+      toast.error("Nothing to repurpose yet — finish earlier steps first.");
+      return;
+    }
+    const platformLabel = PLATFORMS.find((p) => p.id === platform)?.label ?? platform;
+    setAiBusy(`Repurposing for ${platformLabel}...`);
+    try {
+      const text = await runAI(
+        PLATFORM_PROMPTS[platform],
+        `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
+      );
+      const next: RepurposedMap = {
+        ...repurposed,
+        [platform]: { content: text, generatedAt: new Date().toISOString() },
+      };
+      setRepurposed(next);
+      await saveMut.mutateAsync({ ...buildPatch(), repurposed: next as never });
+      toast.success(`${platformLabel} ready`);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setAiBusy(null);
+    }
+  }
+
+  async function copyRepurposed() {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return;
+    try {
+      await navigator.clipboard.writeText(content);
+      setRepurposeCopied(true);
+      setTimeout(() => setRepurposeCopied(false), 2000);
     } catch {
       toast.error("Could not copy");
     }
@@ -352,9 +397,78 @@ function EditorPage() {
               <BfButton variant={copied ? "success" : "primary"} onClick={copyHTML}>
                 {copied ? "✓ Copied!" : "Copy HTML"}
               </BfButton>
+              <BfButton onClick={() => { setStep(4); persist({ step: 4 }, true); }}>Repurpose →</BfButton>
               <BfButton variant="ghost" onClick={() => persist({ status: "published" })}>Mark as Published</BfButton>
               <BfButton variant="ghost" onClick={() => setStep(2)}>← Back</BfButton>
             </div>
+          </div>
+        )}
+
+        {/* STEP 4 — Repurpose */}
+        {step === 4 && (
+          <div>
+            <h2 className="font-display text-xl mb-1">Repurpose for Other Platforms</h2>
+            <div className="text-xs text-muted-foreground mb-4">
+              Turn this article into publish-ready content for any channel
+            </div>
+
+            <div className="flex flex-wrap gap-2 mb-5">
+              {PLATFORMS.map((p) => {
+                const has = !!repurposed[p.id];
+                const active = activePlatform === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => setActivePlatform(p.id)}
+                    className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs transition-colors ${
+                      active
+                        ? "border-accent bg-accent/10 text-accent"
+                        : "border-border bg-card text-muted-foreground hover:text-foreground hover:border-accent/60"
+                    }`}
+                  >
+                    <span className="font-mono text-[11px]">{p.emoji}</span>
+                    <span>{p.label}</span>
+                    {has && <span className="text-success">●</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              {aiBusy ? (
+                <Spinner label={aiBusy} />
+              ) : (
+                <>
+                  <BfButton onClick={() => runRepurpose(activePlatform)}>
+                    {repurposed[activePlatform] ? "↻ Regenerate" : "✦ Generate"}
+                  </BfButton>
+                  {repurposed[activePlatform] && (
+                    <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
+                      {repurposeCopied ? "✓ Copied!" : "Copy"}
+                    </BfButton>
+                  )}
+                </>
+              )}
+              <BfButton variant="ghost" onClick={() => setStep(3)}>← Back</BfButton>
+            </div>
+
+            {repurposed[activePlatform] ? (
+              <Card className="p-0">
+                <pre className="m-0 max-h-[520px] overflow-y-auto whitespace-pre-wrap p-4 text-[13px] leading-relaxed text-foreground font-sans">
+                  {repurposed[activePlatform]?.content}
+                </pre>
+              </Card>
+            ) : (
+              <Card>
+                <div className="text-sm text-muted-foreground">
+                  No content yet for{" "}
+                  <span className="text-accent">
+                    {PLATFORMS.find((p) => p.id === activePlatform)?.label}
+                  </span>
+                  . Click Generate to create a publish-ready version.
+                </div>
+              </Card>
+            )}
           </div>
         )}
       </main>

@@ -65,7 +65,7 @@ function LoginPage() {
       <div className="w-full max-w-sm">
         <Link to="/" className="block text-center mb-8">
           <div className="font-display text-3xl font-bold text-accent">✦ Blogger Finalizer</div>
-          <div className="mt-1 text-xs text-muted-foreground tracking-wide">Draft · Polish · SEO · Publish</div>
+          <div className="mt-1 text-xs text-muted-foreground tracking-wide">Draft · Polish · SEO · Publish · Repurpose</div>
         </Link>
         <Card>
           <div className="mb-5 flex overflow-hidden rounded-lg border border-border">

@@ -22,6 +22,7 @@ export type Database = {
           formatted: string | null
           id: string
           polished: string | null
+          repurposed: Json | null
           seo_data: Json | null
           status: string
           step: number
@@ -38,6 +39,7 @@ export type Database = {
           formatted?: string | null
           id?: string
           polished?: string | null
+          repurposed?: Json | null
           seo_data?: Json | null
           status?: string
           step?: number
@@ -54,6 +56,7 @@ export type Database = {
           formatted?: string | null
           id?: string
           polished?: string | null
+          repurposed?: Json | null
           seo_data?: Json | null
           status?: string
           step?: number
