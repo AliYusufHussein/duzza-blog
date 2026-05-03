@@ -498,9 +498,19 @@ function EditorPage() {
                     {repurposed[activePlatform] ? "↻ Regenerate" : "✦ Generate"}
                   </BfButton>
                   {repurposed[activePlatform] && (
-                    <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
-                      {repurposeCopied ? "✓ Copied!" : "Copy"}
-                    </BfButton>
+                    <>
+                      <BfButton variant={repurposeCopied ? "success" : "outline"} onClick={copyRepurposed}>
+                        {repurposeCopied ? "✓ Copied!" : "Copy"}
+                      </BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("txt")}>⬇ TXT</BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("docx")}>⬇ DOCX</BfButton>
+                      <BfButton variant="outline" onClick={() => exportRepurposed("pdf")}>⬇ PDF</BfButton>
+                      {CAROUSEL_PLATFORMS.includes(activePlatform) && (
+                        <BfButton variant="outline" onClick={() => exportRepurposed("carousel")}>
+                          🎞 Slide Images (.zip)
+                        </BfButton>
+                      )}
+                    </>
                   )}
                 </>
               )}
