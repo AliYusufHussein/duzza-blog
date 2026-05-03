@@ -6,8 +6,9 @@ import { getArticle, updateArticle, type SeoData } from "@/lib/articles";
 import { runAI } from "@/lib/ai-client";
 import { BfButton, Card, Field, Spinner, inputClass } from "@/components/bf-ui";
 import { toast } from "sonner";
+import { PLATFORMS, PLATFORM_PROMPTS, type PlatformId, type RepurposedMap } from "@/lib/repurpose-prompts";
 
-const STEPS = ["Polish", "SEO", "Format", "Preview"];
+const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
 const CATEGORIES = ["Tech", "Lifestyle", "Travel", "Food", "Business", "Health", "Finance", "Other"];
 
