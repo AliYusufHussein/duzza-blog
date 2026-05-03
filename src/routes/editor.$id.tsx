@@ -42,8 +42,11 @@ function EditorPage() {
   const [polished, setPolished] = useState<string | null>(null);
   const [seo, setSeo] = useState<SeoData | null>(null);
   const [formatted, setFormatted] = useState<string | null>(null);
+  const [repurposed, setRepurposed] = useState<RepurposedMap>({});
+  const [activePlatform, setActivePlatform] = useState<PlatformId>("twitter");
   const [aiBusy, setAiBusy] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [repurposeCopied, setRepurposeCopied] = useState(false);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -57,6 +60,7 @@ function EditorPage() {
       setPolished(article.polished);
       setSeo((article.seo_data as SeoData | null) ?? null);
       setFormatted(article.formatted);
+      setRepurposed(((article as { repurposed?: RepurposedMap }).repurposed) ?? {});
       setHydrated(true);
     }
   }, [article, hydrated]);
@@ -80,6 +84,7 @@ function EditorPage() {
       polished,
       seo_data: seo as never,
       formatted,
+      repurposed: repurposed as never,
       step,
       ...extra,
     };
