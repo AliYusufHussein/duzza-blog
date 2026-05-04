@@ -127,6 +127,30 @@ function Dashboard() {
           </BfButton>
         </div>
 
+        <Section title={`Inbox (${inbox.length})`}>
+          {inbox.length === 0 ? (
+            <div className="py-3 text-sm text-muted-foreground">No new articles from Generator</div>
+          ) : (
+            inbox.map((row) => (
+              <div key={row.id} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-display text-[15px]">{row.title || "Untitled"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    From Generator · {new Date(row.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <BfButton
+                  onClick={() => openInboxMut.mutate(row)}
+                  disabled={openInboxMut.isPending}
+                  className="px-3 py-1.5 text-xs"
+                >
+                  Open →
+                </BfButton>
+              </div>
+            ))
+          )}
+        </Section>
+
         {isLoading ? (
           <Spinner label="Loading articles..." />
         ) : articles.length === 0 ? (
