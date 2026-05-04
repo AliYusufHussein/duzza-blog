@@ -68,6 +68,36 @@ export type Database = {
         }
         Relationships: []
       }
+      polisher_inbox: {
+        Row: {
+          article: string
+          campaign_id: string | null
+          created_at: string
+          extraction: Json | null
+          id: string
+          status: string
+          title: string
+        }
+        Insert: {
+          article?: string
+          campaign_id?: string | null
+          created_at?: string
+          extraction?: Json | null
+          id?: string
+          status?: string
+          title?: string
+        }
+        Update: {
+          article?: string
+          campaign_id?: string | null
+          created_at?: string
+          extraction?: Json | null
+          id?: string
+          status?: string
+          title?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
