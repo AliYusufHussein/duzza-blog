@@ -60,6 +60,47 @@ function EditorPage() {
   const [copied, setCopied] = useState(false);
   const [repurposeCopied, setRepurposeCopied] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [schedDate, setSchedDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [schedChannel, setSchedChannel] = useState("");
+  const [schedSending, setSchedSending] = useState(false);
+
+  async function sendToScheduler() {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return toast.error("Generate content first");
+    if (!schedChannel.trim()) return toast.error("Channel is required");
+    setSchedSending(true);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-from-polisher`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          article_id: id,
+          channel: schedChannel,
+          platform: PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform,
+          content,
+          date: schedDate,
+          source: "polisher",
+        }),
+      });
+      if (!res.ok) throw new Error(`Scheduler returned ${res.status}`);
+      toast.success("Sent to Scheduler ✓");
+      setShowScheduler(false);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSchedSending(false);
+    }
+  }
 
   useEffect(() => {
     if (article && !hydrated) {
@@ -510,6 +551,9 @@ function EditorPage() {
                           🎞 Slide Images (.zip)
                         </BfButton>
                       )}
+                      <BfButton onClick={() => setShowScheduler(true)}>
+                        Send to Scheduler →
+                      </BfButton>
                     </>
                   )}
                 </>
@@ -533,6 +577,32 @@ function EditorPage() {
                   . Click Generate to create a publish-ready version.
                 </div>
               </Card>
+            )}
+
+            {showScheduler && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={() => !schedSending && setShowScheduler(false)}>
+                <div className="w-[min(420px,92vw)] rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="font-display text-lg mb-4">Send to Scheduler</h3>
+                  <Field label="Date">
+                    <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
+                  </Field>
+                  <Field label="Channel">
+                    <input
+                      type="text"
+                      value={schedChannel}
+                      onChange={(e) => setSchedChannel(e.target.value)}
+                      placeholder="e.g. @brand_main, Newsletter, Marketing"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <div className="flex justify-end gap-2 mt-3">
+                    <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
+                    <BfButton onClick={sendToScheduler} disabled={schedSending}>
+                      {schedSending ? "Sending..." : "Confirm"}
+                    </BfButton>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}

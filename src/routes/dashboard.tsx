@@ -5,6 +5,15 @@ import { useAuth } from "@/lib/auth-context";
 import { listArticles, createArticle, deleteArticle } from "@/lib/articles";
 import { BfButton, Card, Spinner } from "@/components/bf-ui";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+type InboxRow = {
+  id: string;
+  title: string;
+  article: string;
+  status: string;
+  created_at: string;
+};
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
@@ -41,6 +50,49 @@ function Dashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { data: inbox = [] } = useQuery({
+    queryKey: ["polisher_inbox"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("polisher_inbox" as never)
+        .select("id, title, article, status, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as InboxRow[];
+    },
+    enabled: !!user,
+  });
+
+  const openInboxMut = useMutation({
+    mutationFn: async (row: InboxRow) => {
+      const { error: updErr } = await supabase
+        .from("polisher_inbox" as never)
+        .update({ status: "opened" } as never)
+        .eq("id", row.id);
+      if (updErr) throw updErr;
+      const { data, error } = await supabase
+        .from("articles")
+        .insert({
+          user_id: user!.id,
+          title: row.title || "",
+          draft: row.article || "",
+          status: "draft",
+          step: 0,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (a) => {
+      qc.invalidateQueries({ queryKey: ["polisher_inbox"] });
+      qc.invalidateQueries({ queryKey: ["articles", user?.id] });
+      nav({ to: "/editor/$id", params: { id: a.id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -74,6 +126,30 @@ function Dashboard() {
             + New Article
           </BfButton>
         </div>
+
+        <Section title={`Inbox (${inbox.length})`}>
+          {inbox.length === 0 ? (
+            <div className="py-3 text-sm text-muted-foreground">No new articles from Generator</div>
+          ) : (
+            inbox.map((row) => (
+              <div key={row.id} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-display text-[15px]">{row.title || "Untitled"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    From Generator · {new Date(row.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <BfButton
+                  onClick={() => openInboxMut.mutate(row)}
+                  disabled={openInboxMut.isPending}
+                  className="px-3 py-1.5 text-xs"
+                >
+                  Open →
+                </BfButton>
+              </div>
+            ))
+          )}
+        </Section>
 
         {isLoading ? (
           <Spinner label="Loading articles..." />
