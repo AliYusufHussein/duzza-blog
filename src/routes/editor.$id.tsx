@@ -73,27 +73,23 @@ function EditorPage() {
     const content = repurposed[activePlatform]?.content;
     if (!content) return toast.error("Generate content first");
     if (!schedChannel.trim()) return toast.error("Channel is required");
+    if (!user) return toast.error("Not signed in");
     setSchedSending(true);
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-from-polisher`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          article_id: id,
-          channel: schedChannel,
-          platform: PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform,
-          content,
-          date: schedDate,
-          source: "polisher",
-        }),
+      const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.from("pipeline").insert({
+        user_id: user.id,
+        idea: title,
+        channel: schedChannel,
+        platform: platformLabel,
+        hook: content.slice(0, 280),
+        date: schedDate,
+        status: "Drafting",
+        notes: "From Polisher",
       });
-      if (!res.ok) throw new Error(`Scheduler returned ${res.status}`);
-      toast.success("Sent to Scheduler ✓");
+      if (error) throw error;
+      toast.success("Sent to Pipeline ✓");
       setShowScheduler(false);
     } catch (e) {
       toast.error((e as Error).message);
