@@ -548,7 +548,7 @@ function EditorPage() {
                         </BfButton>
                       )}
                       <BfButton onClick={() => setShowScheduler(true)}>
-                        Send to Scheduler →
+                        Send to Pipeline →
                       </BfButton>
                     </>
                   )}
