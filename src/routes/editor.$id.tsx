@@ -578,7 +578,7 @@ function EditorPage() {
             {showScheduler && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={() => !schedSending && setShowScheduler(false)}>
                 <div className="w-[min(420px,92vw)] rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="font-display text-lg mb-4">Send to Scheduler</h3>
+                  <h3 className="font-display text-lg mb-4">Send to Pipeline</h3>
                   <Field label="Date">
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
