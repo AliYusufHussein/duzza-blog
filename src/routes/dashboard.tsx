@@ -50,6 +50,49 @@ function Dashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { data: inbox = [] } = useQuery({
+    queryKey: ["polisher_inbox"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("polisher_inbox" as never)
+        .select("id, title, article, status, created_at")
+        .eq("status", "pending")
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as unknown as InboxRow[];
+    },
+    enabled: !!user,
+  });
+
+  const openInboxMut = useMutation({
+    mutationFn: async (row: InboxRow) => {
+      const { error: updErr } = await supabase
+        .from("polisher_inbox" as never)
+        .update({ status: "opened" } as never)
+        .eq("id", row.id);
+      if (updErr) throw updErr;
+      const { data, error } = await supabase
+        .from("articles")
+        .insert({
+          user_id: user!.id,
+          title: row.title || "",
+          draft: row.article || "",
+          status: "draft",
+          step: 0,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: (a) => {
+      qc.invalidateQueries({ queryKey: ["polisher_inbox"] });
+      qc.invalidateQueries({ queryKey: ["articles", user?.id] });
+      nav({ to: "/editor/$id", params: { id: a.id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
