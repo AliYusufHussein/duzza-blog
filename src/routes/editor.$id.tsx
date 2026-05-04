@@ -60,6 +60,47 @@ function EditorPage() {
   const [copied, setCopied] = useState(false);
   const [repurposeCopied, setRepurposeCopied] = useState(false);
   const [hydrated, setHydrated] = useState(false);
+  const [showScheduler, setShowScheduler] = useState(false);
+  const [schedDate, setSchedDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [schedChannel, setSchedChannel] = useState("");
+  const [schedSending, setSchedSending] = useState(false);
+
+  async function sendToScheduler() {
+    const content = repurposed[activePlatform]?.content;
+    if (!content) return toast.error("Generate content first");
+    if (!schedChannel.trim()) return toast.error("Channel is required");
+    setSchedSending(true);
+    try {
+      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-from-polisher`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        },
+        body: JSON.stringify({
+          article_id: id,
+          channel: schedChannel,
+          platform: PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform,
+          content,
+          date: schedDate,
+          source: "polisher",
+        }),
+      });
+      if (!res.ok) throw new Error(`Scheduler returned ${res.status}`);
+      toast.success("Sent to Scheduler ✓");
+      setShowScheduler(false);
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setSchedSending(false);
+    }
+  }
 
   useEffect(() => {
     if (article && !hydrated) {
