@@ -551,6 +551,9 @@ function EditorPage() {
                           🎞 Slide Images (.zip)
                         </BfButton>
                       )}
+                      <BfButton onClick={() => setShowScheduler(true)}>
+                        Send to Scheduler →
+                      </BfButton>
                     </>
                   )}
                 </>
