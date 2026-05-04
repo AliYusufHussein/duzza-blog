@@ -68,6 +68,48 @@ export type Database = {
         }
         Relationships: []
       }
+      pipeline: {
+        Row: {
+          channel: string
+          created_at: string
+          date: string | null
+          hook: string
+          id: string
+          idea: string
+          notes: string | null
+          platform: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          date?: string | null
+          hook?: string
+          id?: string
+          idea?: string
+          notes?: string | null
+          platform?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          date?: string | null
+          hook?: string
+          id?: string
+          idea?: string
+          notes?: string | null
+          platform?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       polisher_inbox: {
         Row: {
           article: string
