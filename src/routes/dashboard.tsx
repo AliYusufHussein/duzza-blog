@@ -5,6 +5,15 @@ import { useAuth } from "@/lib/auth-context";
 import { listArticles, createArticle, deleteArticle } from "@/lib/articles";
 import { BfButton, Card, Spinner } from "@/components/bf-ui";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+
+type InboxRow = {
+  id: string;
+  title: string;
+  article: string;
+  status: string;
+  created_at: string;
+};
 
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
