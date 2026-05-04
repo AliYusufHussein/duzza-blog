@@ -73,27 +73,23 @@ function EditorPage() {
     const content = repurposed[activePlatform]?.content;
     if (!content) return toast.error("Generate content first");
     if (!schedChannel.trim()) return toast.error("Channel is required");
+    if (!user) return toast.error("Not signed in");
     setSchedSending(true);
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/receive-from-polisher`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-          apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-        },
-        body: JSON.stringify({
-          article_id: id,
-          channel: schedChannel,
-          platform: PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform,
-          content,
-          date: schedDate,
-          source: "polisher",
-        }),
+      const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
+      const { supabase } = await import("@/integrations/supabase/client");
+      const { error } = await supabase.from("pipeline").insert({
+        user_id: user.id,
+        idea: title,
+        channel: schedChannel,
+        platform: platformLabel,
+        hook: content.slice(0, 280),
+        date: schedDate,
+        status: "Drafting",
+        notes: "From Polisher",
       });
-      if (!res.ok) throw new Error(`Scheduler returned ${res.status}`);
-      toast.success("Sent to Scheduler ✓");
+      if (error) throw error;
+      toast.success("Sent to Pipeline ✓");
       setShowScheduler(false);
     } catch (e) {
       toast.error((e as Error).message);
@@ -552,7 +548,7 @@ function EditorPage() {
                         </BfButton>
                       )}
                       <BfButton onClick={() => setShowScheduler(true)}>
-                        Send to Scheduler →
+                        Send to Pipeline →
                       </BfButton>
                     </>
                   )}
@@ -582,7 +578,7 @@ function EditorPage() {
             {showScheduler && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={() => !schedSending && setShowScheduler(false)}>
                 <div className="w-[min(420px,92vw)] rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                  <h3 className="font-display text-lg mb-4">Send to Scheduler</h3>
+                  <h3 className="font-display text-lg mb-4">Send to Pipeline</h3>
                   <Field label="Date">
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
