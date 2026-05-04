@@ -578,6 +578,32 @@ function EditorPage() {
                 </div>
               </Card>
             )}
+
+            {showScheduler && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm" onClick={() => !schedSending && setShowScheduler(false)}>
+                <div className="w-[min(420px,92vw)] rounded-xl border border-border bg-card p-5 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                  <h3 className="font-display text-lg mb-4">Send to Scheduler</h3>
+                  <Field label="Date">
+                    <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
+                  </Field>
+                  <Field label="Channel">
+                    <input
+                      type="text"
+                      value={schedChannel}
+                      onChange={(e) => setSchedChannel(e.target.value)}
+                      placeholder="e.g. @brand_main, Newsletter, Marketing"
+                      className={inputClass}
+                    />
+                  </Field>
+                  <div className="flex justify-end gap-2 mt-3">
+                    <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
+                    <BfButton onClick={sendToScheduler} disabled={schedSending}>
+                      {schedSending ? "Sending..." : "Confirm"}
+                    </BfButton>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </main>
