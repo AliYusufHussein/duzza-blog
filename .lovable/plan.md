@@ -1,46 +1,43 @@
-# Add Repurpose Step (Multi-Platform Content)
+## Plan: `receive-from-generator` webhook edge function
 
-The uploaded file's standout feature is a **Repurpose** stage that turns a finished blog post into publish-ready content for 10 platforms. Everything else in the upload is already covered (or improved) by the current app. This plan integrates only the new value.
+### 1. Create edge function
+File: `supabase/functions/receive-from-generator/index.ts`
 
-## What gets added
+Logic:
+- Handle CORS preflight (OPTIONS) with permissive headers.
+- Accept POST only; reject others with 405.
+- Parse JSON body. On invalid JSON return 400 `{ error: "Invalid JSON" }`.
+- If `secret !== "duzza_polisher_secret_2026"` return 401 `{ error: "Unauthorized" }`.
+- Validate required fields `title` and `article` are strings (return 400 if missing).
+- Create Supabase client using `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (bypasses RLS, safe — only reachable behind secret check).
+- Insert into `polisher_inbox`:
+  - `campaign_id`: body.campaign_id (nullable)
+  - `title`: body.title
+  - `article`: body.article
+  - `extraction`: body.extraction ?? null
+  - `status`: `'pending'`
+- On insert error return 500 `{ error: <message> }`.
+- On success return 200 `{ success: true, inbox_id: data.id }`.
 
-A 5th step after Preview: **Repurpose**. User picks a platform → AI returns a structured, ready-to-paste output following that platform's prompt template. Outputs are saved per-platform so users can revisit them.
+### 2. Configure as public webhook
+Update `supabase/config.toml` to append:
+```
+[functions.receive-from-generator]
+verify_jwt = false
+```
 
-### Platforms (from upload)
-X/Twitter Thread · LinkedIn Post · LinkedIn Carousel · Instagram Caption · Instagram Carousel · TikTok/Reels Script · YouTube Long-Form Script · Email Newsletter · Telegram/WhatsApp Broadcast · Facebook Post
+### 3. Deploy
+Use `supabase--deploy_edge_functions` for `receive-from-generator`.
 
-Each has a detailed structural prompt (hook → framework → breakdown → CTA, plus variation options and a completion report) — copied verbatim from the upload.
+### 4. Smoke test
+Use `supabase--curl_edge_functions` to POST a sample payload and verify a row is inserted and `inbox_id` is returned. Also test the 401 path with wrong secret.
 
-## Changes
+### 5. Output the URL
+After deploy, the public URL is:
+```
+https://hckpfuipklzyzhkmicuz.supabase.co/functions/v1/receive-from-generator
+```
 
-### 1. Database
-Add one nullable column to `articles`:
-- `repurposed jsonb` — `{ [platformId]: { content: string, generatedAt: string } }`
-
-Migration via the standard tool. RLS already covers it.
-
-### 2. Prompt library
-New file `src/lib/repurpose-prompts.ts` — exports `PLATFORMS` array (id, label, emoji) and `PLATFORM_PROMPTS` map, lifted from the uploaded file.
-
-### 3. Editor flow (`src/routes/editor.$id.tsx`)
-- Extend `STEPS` to `["Polish", "SEO", "Format", "Preview", "Repurpose"]`.
-- New step UI: grid of platform tiles → on select, show generate/regenerate button + output panel with copy button.
-- Reuses existing `runAI` server function. Input = `formatted ?? polished ?? draft` + chosen platform's prompt + title/keyword context.
-- Persist results into `articles.repurposed` via existing `updateArticle` patch.
-- Hydrate `repurposed` alongside other fields.
-
-### 4. Types
-Regenerated automatically from the migration — no manual edits.
-
-### 5. Landing/dashboard copy
-Update tagline to include "Repurpose" so users know the step exists.
-
-## Out of scope (intentionally not ported)
-- localStorage auth from the upload — current Supabase auth + RLS is strictly better.
-- Inline `<style>` blocks and inline-style primitives — current `bf-ui` + Tailwind is cleaner.
-- Font imports — already loaded in `styles.css`.
-
-## Technical notes
-- Server function: existing `runAI` already accepts arbitrary system + user prompts, so no new server function needed.
-- Output format: store raw markdown/text returned by the model; render in a `<pre>`-style panel with monospace + copy button (matches Preview step look).
-- Token budget: outputs can be long (carousels, YouTube scripts) — no truncation; let the model finish.
+### Notes
+- The shared secret `duzza_polisher_secret_2026` is hardcoded as requested. Recommend later moving it to a Supabase secret (`POLISHER_SHARED_SECRET`) for easier rotation — happy to do that as a follow-up.
+- No changes to existing UI or other functions.
