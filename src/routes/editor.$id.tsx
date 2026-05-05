@@ -20,6 +20,8 @@ import {
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
+const TRACKER_WEBHOOK_URL = "PASTE_URL_HERE";
+
 const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
 const CATEGORIES = ["Tech", "Lifestyle", "Travel", "Food", "Business", "Health", "Finance", "Other"];
@@ -77,18 +79,22 @@ function EditorPage() {
     setSchedSending(true);
     try {
       const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { error } = await supabase.from("pipeline").insert({
-        user_id: user.id,
-        idea: title,
-        channel: schedChannel,
-        platform: platformLabel,
-        hook: content.slice(0, 280),
-        date: schedDate,
-        status: "Drafting",
-        notes: "From Polisher",
+      const res = await fetch(TRACKER_WEBHOOK_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          article_id: id,
+          channel: schedChannel,
+          platform: platformLabel,
+          content,
+          date: schedDate,
+          source: "polisher",
+        }),
       });
-      if (error) throw error;
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || `Request failed (${res.status})`);
+      }
       toast.success("Sent to Pipeline ✓");
       setShowScheduler(false);
     } catch (e) {
