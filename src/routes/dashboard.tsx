@@ -107,6 +107,58 @@ function Dashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { data: pipelineQueue = [] } = useQuery({
+    queryKey: ["pipeline_queue"],
+    queryFn: async () => {
+      const res = await fetch(PIPELINE_QUEUE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: PIPELINE_SECRET }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch pipeline queue");
+      const json = await res.json();
+      return (json?.items ?? json ?? []) as PipelineQueueItem[];
+    },
+    enabled: !!user,
+    refetchInterval: 60000,
+  });
+
+  const openPipelineMut = useMutation({
+    mutationFn: async (item: PipelineQueueItem) => {
+      const { data, error } = await supabase
+        .from("articles")
+        .insert({
+          user_id: user!.id,
+          title: item.idea || "",
+          draft: item.hook || "",
+          status: "draft",
+          step: 0,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      const today = new Date().toISOString().slice(0, 10);
+      await fetch(PIPELINE_RECEIVE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pipeline_id: item.pipeline_id,
+          content: item.hook,
+          channel: item.channel,
+          platform: item.platform,
+          date: today,
+        }),
+      }).catch(() => {});
+      return data;
+    },
+    onSuccess: (a) => {
+      qc.invalidateQueries({ queryKey: ["pipeline_queue"] });
+      qc.invalidateQueries({ queryKey: ["articles", user?.id] });
+      nav({ to: "/editor/$id", params: { id: a.id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
