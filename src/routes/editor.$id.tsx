@@ -91,14 +91,15 @@ function EditorPage() {
           source: "polisher",
         }),
       });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || `Request failed (${res.status})`);
+      const bodyText = await res.text();
+      if (res.ok) {
+        toast.success(`Sent to Pipeline ✓ (${res.status})`, { description: bodyText || "(empty body)" });
+        setShowScheduler(false);
+      } else {
+        toast.error(`Pipeline error ${res.status}`, { description: bodyText || "(empty body)" });
       }
-      toast.success("Sent to Pipeline ✓");
-      setShowScheduler(false);
     } catch (e) {
-      toast.error((e as Error).message);
+      toast.error("Request failed", { description: (e as Error).message });
     } finally {
       setSchedSending(false);
     }
