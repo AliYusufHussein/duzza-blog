@@ -15,6 +15,20 @@ type InboxRow = {
   created_at: string;
 };
 
+type PipelineQueueItem = {
+  pipeline_id: string;
+  idea: string;
+  channel: string;
+  platform: string;
+  format?: string;
+  hook: string;
+  created_at: string;
+};
+
+const PIPELINE_QUEUE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/serve-polisher-queue";
+const PIPELINE_RECEIVE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/receive-from-polisher";
+const PIPELINE_SECRET = "duzza_polisher_secret_2026";
+
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({ meta: [{ title: "My Articles — Blogger Finalizer" }] }),
@@ -93,6 +107,58 @@ function Dashboard() {
     onError: (e: Error) => toast.error(e.message),
   });
 
+  const { data: pipelineQueue = [] } = useQuery({
+    queryKey: ["pipeline_queue"],
+    queryFn: async () => {
+      const res = await fetch(PIPELINE_QUEUE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ secret: PIPELINE_SECRET }),
+      });
+      if (!res.ok) throw new Error("Failed to fetch pipeline queue");
+      const json = await res.json();
+      return (json?.items ?? json ?? []) as PipelineQueueItem[];
+    },
+    enabled: !!user,
+    refetchInterval: 60000,
+  });
+
+  const openPipelineMut = useMutation({
+    mutationFn: async (item: PipelineQueueItem) => {
+      const { data, error } = await supabase
+        .from("articles")
+        .insert({
+          user_id: user!.id,
+          title: item.idea || "",
+          draft: item.hook || "",
+          status: "draft",
+          step: 0,
+        })
+        .select("*")
+        .single();
+      if (error) throw error;
+      const today = new Date().toISOString().slice(0, 10);
+      await fetch(PIPELINE_RECEIVE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          pipeline_id: item.pipeline_id,
+          content: item.hook,
+          channel: item.channel,
+          platform: item.platform,
+          date: today,
+        }),
+      }).catch(() => {});
+      return data;
+    },
+    onSuccess: (a) => {
+      qc.invalidateQueries({ queryKey: ["pipeline_queue"] });
+      qc.invalidateQueries({ queryKey: ["articles", user?.id] });
+      nav({ to: "/editor/$id", params: { id: a.id } });
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+
   if (authLoading || !user) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -142,6 +208,30 @@ function Dashboard() {
                 <BfButton
                   onClick={() => openInboxMut.mutate(row)}
                   disabled={openInboxMut.isPending}
+                  className="px-3 py-1.5 text-xs"
+                >
+                  Open →
+                </BfButton>
+              </div>
+            ))
+          )}
+        </Section>
+
+        <Section title={`From Pipeline (${pipelineQueue.length})`}>
+          {pipelineQueue.length === 0 ? (
+            <div className="py-3 text-sm text-muted-foreground">No items from Pipeline</div>
+          ) : (
+            pipelineQueue.map((item) => (
+              <div key={item.pipeline_id} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-display text-[15px]">{item.idea || "Untitled"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {[item.channel, item.platform, item.format].filter(Boolean).join(" · ")} · {new Date(item.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <BfButton
+                  onClick={() => openPipelineMut.mutate(item)}
+                  disabled={openPipelineMut.isPending}
                   className="px-3 py-1.5 text-xs"
                 >
                   Open →
