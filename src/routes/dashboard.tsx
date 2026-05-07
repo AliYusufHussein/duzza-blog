@@ -15,6 +15,20 @@ type InboxRow = {
   created_at: string;
 };
 
+type PipelineQueueItem = {
+  pipeline_id: string;
+  idea: string;
+  channel: string;
+  platform: string;
+  format?: string;
+  hook: string;
+  created_at: string;
+};
+
+const PIPELINE_QUEUE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/serve-polisher-queue";
+const PIPELINE_RECEIVE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/receive-from-polisher";
+const PIPELINE_SECRET = "duzza_polisher_secret_2026";
+
 export const Route = createFileRoute("/dashboard")({
   component: Dashboard,
   head: () => ({ meta: [{ title: "My Articles — Blogger Finalizer" }] }),
