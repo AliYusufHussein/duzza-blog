@@ -217,6 +217,30 @@ function Dashboard() {
           )}
         </Section>
 
+        <Section title={`From Pipeline (${pipelineQueue.length})`}>
+          {pipelineQueue.length === 0 ? (
+            <div className="py-3 text-sm text-muted-foreground">No items from Pipeline</div>
+          ) : (
+            pipelineQueue.map((item) => (
+              <div key={item.pipeline_id} className="flex items-center gap-3 border-b border-border/50 py-3 last:border-b-0">
+                <div className="flex-1 min-w-0">
+                  <div className="truncate font-display text-[15px]">{item.idea || "Untitled"}</div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {[item.channel, item.platform, item.format].filter(Boolean).join(" · ")} · {new Date(item.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+                <BfButton
+                  onClick={() => openPipelineMut.mutate(item)}
+                  disabled={openPipelineMut.isPending}
+                  className="px-3 py-1.5 text-xs"
+                >
+                  Open →
+                </BfButton>
+              </div>
+            ))
+          )}
+        </Section>
+
         {isLoading ? (
           <Spinner label="Loading articles..." />
         ) : articles.length === 0 ? (
