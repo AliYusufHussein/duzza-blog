@@ -92,14 +92,33 @@ function EditorPage() {
         }),
       });
       const bodyText = await res.text();
+      const copyAction = {
+        label: "Copy",
+        onClick: () => {
+          navigator.clipboard?.writeText(`Status: ${res.status}\n\n${bodyText}`);
+        },
+      };
       if (res.ok) {
-        toast.success(`Sent to Pipeline ✓ (${res.status})`, { description: bodyText || "(empty body)" });
+        toast.success(`Sent to Pipeline ✓ (${res.status})`, {
+          description: bodyText || "(empty body)",
+          duration: Infinity,
+          action: copyAction,
+        });
         setShowScheduler(false);
       } else {
-        toast.error(`Pipeline error ${res.status}`, { description: bodyText || "(empty body)" });
+        toast.error(`Pipeline error ${res.status}`, {
+          description: bodyText || "(empty body)",
+          duration: Infinity,
+          action: copyAction,
+        });
       }
     } catch (e) {
-      toast.error("Request failed", { description: (e as Error).message });
+      const msg = (e as Error).message;
+      toast.error("Request failed", {
+        description: msg,
+        duration: Infinity,
+        action: { label: "Copy", onClick: () => navigator.clipboard?.writeText(msg) },
+      });
     } finally {
       setSchedSending(false);
     }
