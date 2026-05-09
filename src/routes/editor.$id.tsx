@@ -20,7 +20,7 @@ import {
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
-const TRACKER_WEBHOOK_URL = "PASTE_URL_HERE";
+const TRACKER_WEBHOOK_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/receive-from-polisher";
 
 const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
@@ -92,33 +92,18 @@ function EditorPage() {
         }),
       });
       const bodyText = await res.text();
-      const copyAction = {
-        label: "Copy",
-        onClick: () => {
-          navigator.clipboard?.writeText(`Status: ${res.status}\n\n${bodyText}`);
-        },
-      };
       if (res.ok) {
         toast.success(`Sent to Pipeline ✓ (${res.status})`, {
           description: bodyText || "(empty body)",
-          duration: Infinity,
-          action: copyAction,
         });
         setShowScheduler(false);
       } else {
         toast.error(`Pipeline error ${res.status}`, {
           description: bodyText || "(empty body)",
-          duration: Infinity,
-          action: copyAction,
         });
       }
     } catch (e) {
-      const msg = (e as Error).message;
-      toast.error("Request failed", {
-        description: msg,
-        duration: Infinity,
-        action: { label: "Copy", onClick: () => navigator.clipboard?.writeText(msg) },
-      });
+      toast.error("Request failed", { description: (e as Error).message });
     } finally {
       setSchedSending(false);
     }
