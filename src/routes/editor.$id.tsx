@@ -89,6 +89,8 @@ function EditorPage() {
           content,
           date: schedDate,
           source: "polisher",
+          secret: "duzza_polisher_secret_2026",
+          title,
         }),
       });
       const bodyText = await res.text();
