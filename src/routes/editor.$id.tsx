@@ -26,6 +26,48 @@ const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
 const CATEGORIES = ["Tech", "Lifestyle", "Travel", "Food", "Business", "Health", "Finance", "Other"];
 
+function cleanRepurposedContent(raw: string): string {
+  if (!raw) return raw;
+  let text = raw.replace(/\r\n/g, "\n");
+
+  // 1. Strip everything before the first standalone --- separator
+  const firstSep = text.match(/^[ \t]*---[ \t]*$/m);
+  if (firstSep && firstSep.index !== undefined) {
+    text = text.slice(firstSep.index + firstSep[0].length).replace(/^\n+/, "");
+  }
+
+  // 2. Cut Completion Report and everything after
+  text = text.replace(/\*\*Completion Report:\*\*[\s\S]*$/i, "").trimEnd();
+
+  // 3. Remove Hook Options / Hook Variations sections
+  text = text.replace(
+    /\*\*Hook (?:Options|Variations):\*\*[\s\S]*?(?=\n\*\*[^*\n]+:\*\*|\n[ \t]*---[ \t]*\n|$)/gi,
+    "",
+  );
+
+  // 4. Remove specific metadata lines
+  const metaLabels = [
+    "Carousel Angle",
+    "Framework Name",
+    "CTA Confirmed",
+    "Video Angle",
+    "Message Angle",
+    "Post angle",
+  ];
+  const metaRe = new RegExp(
+    `^[ \\t]*\\*\\*(?:${metaLabels.join("|")}):\\*\\*.*\\n?`,
+    "gim",
+  );
+  text = text.replace(metaRe, "");
+
+  // 5. Remove standalone --- separator lines
+  text = text.replace(/^[ \t]*---[ \t]*\n?/gm, "");
+
+  // Collapse extra blank lines
+  text = text.replace(/\n{3,}/g, "\n\n").trim();
+  return text;
+}
+
 export const Route = createFileRoute("/editor/$id")({
   component: EditorPage,
   head: () => ({ meta: [{ title: "Editor — Blogger Finalizer" }] }),
@@ -251,9 +293,10 @@ function EditorPage() {
         PLATFORM_PROMPTS[platform],
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
+      const cleaned = cleanRepurposedContent(text);
       const next: RepurposedMap = {
         ...repurposed,
-        [platform]: { content: text, generatedAt: new Date().toISOString() },
+        [platform]: { content: cleaned, generatedAt: new Date().toISOString() },
       };
       setRepurposed(next);
       await saveMut.mutateAsync({ ...buildPatch(), repurposed: next as never });
