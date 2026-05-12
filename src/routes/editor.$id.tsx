@@ -251,9 +251,10 @@ function EditorPage() {
         PLATFORM_PROMPTS[platform],
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
+      const cleaned = cleanRepurposedContent(text);
       const next: RepurposedMap = {
         ...repurposed,
-        [platform]: { content: text, generatedAt: new Date().toISOString() },
+        [platform]: { content: cleaned, generatedAt: new Date().toISOString() },
       };
       setRepurposed(next);
       await saveMut.mutateAsync({ ...buildPatch(), repurposed: next as never });
