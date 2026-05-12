@@ -39,11 +39,22 @@ function cleanRepurposedContent(raw: string): string {
   // 2. Cut Completion Report and everything after
   text = text.replace(/\*\*Completion Report:\*\*[\s\S]*$/i, "").trimEnd();
 
-  // 3. Remove Hook Options / Hook Variations sections
-  text = text.replace(
-    /\*\*Hook (?:Options|Variations):\*\*[\s\S]*?(?=\n\*\*[^*\n]+:\*\*|\n[ \t]*---[ \t]*\n|$)/gi,
-    "",
+  // 3. Remove wrapper option/sample sections (heading + their list)
+  const wrapperSections = [
+    "Title Tweet Options",
+    "Opening Line Options",
+    "Hook Options",
+    "Hook Variations",
+    "Subject Samples",
+    "Preview Line Samples",
+    "Cover Headline Options",
+    "CTA Options",
+  ];
+  const wrapperRe = new RegExp(
+    `\\*\\*(?:${wrapperSections.join("|")}):\\*\\*[\\s\\S]*?(?=\\n\\*\\*[^*\\n]+:\\*\\*|\\n[ \\t]*---[ \\t]*\\n|$)`,
+    "gi",
   );
+  text = text.replace(wrapperRe, "");
 
   // 4. Remove specific metadata lines
   const metaLabels = [
