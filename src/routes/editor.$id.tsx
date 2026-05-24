@@ -17,6 +17,7 @@ import {
   downloadPdfFromText,
   downloadCarouselZip,
 } from "@/lib/exporters";
+import { TiptapEditor } from "@/components/tiptap-editor";
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
