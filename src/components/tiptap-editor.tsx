@@ -1,6 +1,7 @@
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Placeholder from "@tiptap/extension-placeholder";
+import { marked } from "marked";
 import { useEffect, useRef } from "react";
 
 interface TiptapEditorProps {
@@ -16,13 +17,7 @@ function textToHtml(input: string): string {
   if (/^\s*<(p|h[1-6]|ul|ol|blockquote|hr|div)[\s>]/i.test(trimmed)) {
     return trimmed;
   }
-  // Convert plain text to paragraphs, preserving blank-line splits.
-  const escape = (s: string) =>
-    s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  return trimmed
-    .split(/\n{2,}/)
-    .map((block) => `<p>${escape(block).replace(/\n/g, "<br/>")}</p>`)
-    .join("");
+  return marked.parse(input, { breaks: true }) as string;
 }
 
 function ToolbarBtn({
