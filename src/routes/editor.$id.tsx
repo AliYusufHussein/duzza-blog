@@ -20,7 +20,7 @@ import {
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
-const TRACKER_WEBHOOK_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/receive-from-polisher";
+const TRACKER_WEBHOOK_URL = "https://bdslxjkfnziyyqomtzso.supabase.co/functions/v1/receive-from-polisher";
 
 const STEPS = ["Polish", "SEO", "Format", "Preview", "Repurpose"];
 const TONES = ["Professional", "Conversational", "Witty", "Inspirational", "Educational"];
