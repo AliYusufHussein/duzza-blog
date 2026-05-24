@@ -91,6 +91,20 @@
   .hp strong { color: var(--foreground); }
   .hp ul, .hp ol { color: oklch(0.82 0.02 250); line-height: 1.7; }
 
+  /* Tiptap content */
+  .tiptap-content p { margin: 0 0 0.75em; }
+  .tiptap-content h1 { font-family: var(--font-display); font-size: 1.7em; font-weight: 700; margin: 0.6em 0 0.4em; color: #f0ede8; }
+  .tiptap-content h2 { font-family: var(--font-display); font-size: 1.4em; font-weight: 700; margin: 0.6em 0 0.4em; color: #f0ede8; }
+  .tiptap-content h3 { font-family: var(--font-display); font-size: 1.15em; font-weight: 600; margin: 0.6em 0 0.4em; color: #f0ede8; }
+  .tiptap-content ul, .tiptap-content ol { padding-left: 1.4em; margin: 0 0 0.75em; }
+  .tiptap-content ul { list-style: disc; }
+  .tiptap-content ol { list-style: decimal; }
+  .tiptap-content li { margin: 0.15em 0; }
+  .tiptap-content blockquote { border-left: 3px solid var(--accent); padding: 0.2em 0 0.2em 0.9em; margin: 0.6em 0; color: #f0ede8cc; font-style: italic; }
+  .tiptap-content hr { border: 0; border-top: 1px solid #2a2a2a; margin: 1em 0; }
+  .tiptap-content strong { color: #fff; }
+  .tiptap-content p.is-editor-empty:first-child::before { content: attr(data-placeholder); color: #f0ede880; float: left; height: 0; pointer-events: none; }
+
   /* Spinner */
   .bf-spin { width: 15px; height: 15px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: bfs .7s linear infinite; }
   @keyframes bfs { to { transform: rotate(360deg); } }

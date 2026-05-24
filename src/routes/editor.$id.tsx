@@ -17,6 +17,7 @@ import {
   downloadPdfFromText,
   downloadCarouselZip,
 } from "@/lib/exporters";
+import { TiptapEditor } from "@/components/tiptap-editor";
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
@@ -625,11 +626,21 @@ function EditorPage() {
             </div>
 
             {repurposed[activePlatform] ? (
-              <Card className="p-0">
-                <pre className="m-0 max-h-[520px] overflow-y-auto whitespace-pre-wrap p-4 text-[13px] leading-relaxed text-foreground font-sans">
-                  {repurposed[activePlatform]?.content}
-                </pre>
-              </Card>
+              <TiptapEditor
+                key={activePlatform}
+                value={repurposed[activePlatform]?.content ?? ""}
+                placeholder={`Edit your ${PLATFORMS.find((p) => p.id === activePlatform)?.label ?? ""} content...`}
+                onChange={(html) => {
+                  setRepurposed((prev) => {
+                    const current = prev[activePlatform];
+                    if (!current) return prev;
+                    return {
+                      ...prev,
+                      [activePlatform]: { ...current, content: html },
+                    };
+                  });
+                }}
+              />
             ) : (
               <Card>
                 <div className="text-sm text-muted-foreground">
