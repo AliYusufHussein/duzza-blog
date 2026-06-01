@@ -72,6 +72,22 @@ function cleanRepurposedContent(raw: string): string {
   );
   text = text.replace(metaRe, "");
 
+  // 4b. Remove **Option N: CTA** blocks (header + following text until blank line or next ** heading)
+  text = text.replace(
+    /^[ \t]*\*\*Option \d+:\s*CTA\*\*[\s\S]*?(?=\n[ \t]*\n|\n[ \t]*\*\*|$)/gim,
+    "",
+  );
+
+  // 4c. Remove **Option N: <label>** lines + immediately following line, repeating
+  let prev: string;
+  do {
+    prev = text;
+    text = text.replace(
+      /^[ \t]*\*\*Option \d+:[^*\n]*\*\*[ \t]*\n[^\n]*\n?/gim,
+      "",
+    );
+  } while (text !== prev);
+
   // 5. Remove standalone --- separator lines
   text = text.replace(/^[ \t]*---[ \t]*\n?/gm, "");
 
