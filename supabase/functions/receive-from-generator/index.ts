@@ -44,6 +44,8 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
+  console.log("Inserting:", JSON.stringify({ campaign_id, title: title?.slice(0,50), has_extraction: !!extraction }));
+
   const { data, error } = await supabase
     .from("polisher_inbox")
     .insert({
@@ -60,6 +62,8 @@ Deno.serve(async (req) => {
     console.error("Insert failed:", error);
     return json({ error: error.message }, 500);
   }
+
+  console.log("Insert success, inbox_id:", data.id);
 
   return json({ success: true, inbox_id: data.id });
 });
