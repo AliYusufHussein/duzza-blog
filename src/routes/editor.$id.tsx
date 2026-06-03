@@ -720,13 +720,16 @@ function EditorPage() {
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
                   <Field label="Channel">
-                    <input
-                      type="text"
-                      value={schedChannel}
-                      onChange={(e) => setSchedChannel(e.target.value)}
-                      placeholder="e.g. @brand_main, Newsletter, Marketing"
-                      className={inputClass}
-                    />
+                    <Select value={schedChannel} onValueChange={setSchedChannel}>
+                      <SelectTrigger className={inputClass}>
+                        <SelectValue placeholder={channels.length ? "Select a channel" : "No channels available"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.brand}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </Field>
                   <div className="flex justify-end gap-2 mt-3">
                     <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
