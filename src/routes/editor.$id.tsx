@@ -352,8 +352,16 @@ function EditorPage() {
     const platformLabel = PLATFORMS.find((p) => p.id === platform)?.label ?? platform;
     setAiBusy(`Repurposing for ${platformLabel}...`);
     try {
+      let systemPrompt = PLATFORM_PROMPTS[platform];
+      if (toneProfile) {
+        const brand = channels.find((c) => c.id === schedChannel)?.brand ?? "";
+        const keywords = (toneProfile.tone_keywords ?? []).join(", ");
+        systemPrompt =
+          `CHANNEL TONE PROFILE:\nBrand: ${brand}\nVoice: ${toneProfile.brand_voice}\nTone: ${keywords}\nAudience: ${toneProfile.audience}\nAvoid: ${toneProfile.avoid}\nSample line: ${toneProfile.sample_line}\n\nApply this voice consistently. Platform formatting rules still apply.\n\n` +
+          systemPrompt;
+      }
       const text = await runAI(
-        PLATFORM_PROMPTS[platform],
+        systemPrompt,
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
       const cleaned = cleanRepurposedContent(text);
