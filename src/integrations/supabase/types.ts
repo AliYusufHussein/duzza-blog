@@ -68,30 +68,6 @@ export type Database = {
         }
         Relationships: []
       }
-      channels: {
-        Row: {
-          brand: string
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          brand: string
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          brand?: string
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
       pipeline: {
         Row: {
           channel: string
@@ -163,53 +139,6 @@ export type Database = {
           title?: string
         }
         Relationships: []
-      }
-      tone_profiles: {
-        Row: {
-          audience: string
-          avoid: string
-          brand_voice: string
-          channel_id: string
-          created_at: string
-          id: string
-          sample_line: string
-          telegram_format_notes: string | null
-          tone_keywords: string[]
-          updated_at: string
-        }
-        Insert: {
-          audience: string
-          avoid: string
-          brand_voice: string
-          channel_id: string
-          created_at?: string
-          id?: string
-          sample_line: string
-          telegram_format_notes?: string | null
-          tone_keywords?: string[]
-          updated_at?: string
-        }
-        Update: {
-          audience?: string
-          avoid?: string
-          brand_voice?: string
-          channel_id?: string
-          created_at?: string
-          id?: string
-          sample_line?: string
-          telegram_format_notes?: string | null
-          tone_keywords?: string[]
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tone_profiles_channel_id_fkey"
-            columns: ["channel_id"]
-            isOneToOne: true
-            referencedRelation: "channels"
-            referencedColumns: ["id"]
-          },
-        ]
       }
     }
     Views: {
