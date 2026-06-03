@@ -149,7 +149,32 @@ function EditorPage() {
     return d.toISOString().slice(0, 10);
   });
   const [schedChannel, setSchedChannel] = useState("");
+  const [toneProfile, setToneProfile] = useState<ToneProfile | null>(null);
   const [schedSending, setSchedSending] = useState(false);
+
+  const { data: channels = [] } = useQuery({
+    queryKey: ["channels", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("channels").select("id, brand").order("brand");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (!schedChannel) { setToneProfile(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("tone_profiles")
+        .select("brand_voice, tone_keywords, audience, avoid, sample_line")
+        .eq("channel_id", schedChannel)
+        .maybeSingle();
+      if (!cancelled) setToneProfile((data as ToneProfile | null) ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [schedChannel]);
 
   async function sendToScheduler() {
     const content = repurposed[activePlatform]?.content;
