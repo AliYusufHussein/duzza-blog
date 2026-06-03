@@ -18,6 +18,16 @@ import {
   downloadCarouselZip,
 } from "@/lib/exporters";
 import { TiptapEditor } from "@/components/tiptap-editor";
+import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+type ToneProfile = {
+  brand_voice: string;
+  tone_keywords: string[] | null;
+  audience: string;
+  avoid: string;
+  sample_line: string;
+};
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
@@ -139,7 +149,32 @@ function EditorPage() {
     return d.toISOString().slice(0, 10);
   });
   const [schedChannel, setSchedChannel] = useState("");
+  const [toneProfile, setToneProfile] = useState<ToneProfile | null>(null);
   const [schedSending, setSchedSending] = useState(false);
+
+  const { data: channels = [] } = useQuery({
+    queryKey: ["channels", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("channels").select("id, brand").order("brand");
+      if (error) throw error;
+      return data ?? [];
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    if (!schedChannel) { setToneProfile(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("tone_profiles")
+        .select("brand_voice, tone_keywords, audience, avoid, sample_line")
+        .eq("channel_id", schedChannel)
+        .maybeSingle();
+      if (!cancelled) setToneProfile((data as ToneProfile | null) ?? null);
+    })();
+    return () => { cancelled = true; };
+  }, [schedChannel]);
 
   async function sendToScheduler() {
     const content = repurposed[activePlatform]?.content;
@@ -317,8 +352,16 @@ function EditorPage() {
     const platformLabel = PLATFORMS.find((p) => p.id === platform)?.label ?? platform;
     setAiBusy(`Repurposing for ${platformLabel}...`);
     try {
+      let systemPrompt = PLATFORM_PROMPTS[platform];
+      if (toneProfile) {
+        const brand = channels.find((c) => c.id === schedChannel)?.brand ?? "";
+        const keywords = (toneProfile.tone_keywords ?? []).join(", ");
+        systemPrompt =
+          `CHANNEL TONE PROFILE:\nBrand: ${brand}\nVoice: ${toneProfile.brand_voice}\nTone: ${keywords}\nAudience: ${toneProfile.audience}\nAvoid: ${toneProfile.avoid}\nSample line: ${toneProfile.sample_line}\n\nApply this voice consistently. Platform formatting rules still apply.\n\n` +
+          systemPrompt;
+      }
       const text = await runAI(
-        PLATFORM_PROMPTS[platform],
+        systemPrompt,
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
       const cleaned = cleanRepurposedContent(text);
@@ -677,13 +720,16 @@ function EditorPage() {
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
                   <Field label="Channel">
-                    <input
-                      type="text"
-                      value={schedChannel}
-                      onChange={(e) => setSchedChannel(e.target.value)}
-                      placeholder="e.g. @brand_main, Newsletter, Marketing"
-                      className={inputClass}
-                    />
+                    <Select value={schedChannel} onValueChange={setSchedChannel}>
+                      <SelectTrigger className={inputClass}>
+                        <SelectValue placeholder={channels.length ? "Select a channel" : "No channels available"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {channels.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>{c.brand}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </Field>
                   <div className="flex justify-end gap-2 mt-3">
                     <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
