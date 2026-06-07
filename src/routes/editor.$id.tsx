@@ -166,7 +166,7 @@ function EditorPage() {
   const { data: channels = [] } = useQuery({
     queryKey: ["channels", user?.id],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await scheduler
         .from("channels")
         .select("id, brand")
         .order("brand", { ascending: true });
@@ -194,7 +194,7 @@ function EditorPage() {
       return;
     }
     (async () => {
-      const { data } = await supabase
+      const { data } = await scheduler
         .from("tone_profiles")
         .select("brand_voice, tone_keywords, audience, avoid, sample_line")
         .eq("channel_id", schedChannelId)
