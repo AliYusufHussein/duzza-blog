@@ -729,13 +729,21 @@ function EditorPage() {
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
                   <Field label="Channel">
-                    <input
-                      type="text"
-                      value={schedChannel}
-                      onChange={(e) => setSchedChannel(e.target.value)}
-                      placeholder="e.g. @brand_main, Newsletter, Marketing"
+                    <select
+                      value={schedChannelId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setSchedChannelId(id);
+                        const c = channels.find((ch) => ch.id === id);
+                        setSchedChannel(c?.brand ?? "");
+                      }}
                       className={inputClass}
-                    />
+                    >
+                      <option value="">Select a channel...</option>
+                      {channels.map((c) => (
+                        <option key={c.id} value={c.id}>{c.brand}</option>
+                      ))}
+                    </select>
                   </Field>
                   <div className="flex justify-end gap-2 mt-3">
                     <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
