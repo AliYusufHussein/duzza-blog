@@ -97,8 +97,19 @@ function cleanRepurposedContent(raw: string): string {
     );
   } while (text !== prev);
 
+  // 4d. Strip specific label-only lines (keep following content)
+  const stripLabelRe = new RegExp(
+    "^[ \\t]*\\*{0,2}(?:Topic Setup|Main Value|Practical Takeaway|Closing Line|Hook Options|CTA Options|5 Hook[^\\n]*|2 CTA[^\\n]*):\\*{0,2}[ \\t]*\\n",
+    "gim",
+  );
+  text = text.replace(stripLabelRe, "");
+
+  // 4e. Strip '*Option [number]:' label lines (keep following content)
+  text = text.replace(/^[ \t]*\*+Option \d+:[^\n]*\n/gim, "");
+
   // 5. Remove standalone --- separator lines
   text = text.replace(/^[ \t]*---[ \t]*\n?/gm, "");
+
 
   // Collapse extra blank lines
   text = text.replace(/\n{3,}/g, "\n\n").trim();
@@ -159,7 +170,11 @@ function EditorPage() {
         .from("channels")
         .select("id, brand")
         .order("brand", { ascending: true });
-      if (error) throw error;
+      console.log("[channels query]", { data, error, userId: user?.id });
+      if (error) {
+        console.error("[channels query error]", error);
+        throw error;
+      }
       const seen = new Set<string>();
       return (data ?? []).filter((c) => {
         const key = c.brand.trim().toLowerCase();
@@ -168,6 +183,7 @@ function EditorPage() {
         return true;
       });
     },
+
     enabled: !!user,
   });
 
