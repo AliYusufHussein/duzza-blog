@@ -18,6 +18,15 @@ import {
   downloadCarouselZip,
 } from "@/lib/exporters";
 import { TiptapEditor } from "@/components/tiptap-editor";
+import { supabase } from "@/integrations/supabase/client";
+
+type ToneProfile = {
+  brand_voice: string;
+  tone_keywords: string[];
+  audience: string;
+  avoid: string;
+  sample_line: string;
+};
 
 const CAROUSEL_PLATFORMS: PlatformId[] = ["li_carousel", "ig_carousel"];
 
