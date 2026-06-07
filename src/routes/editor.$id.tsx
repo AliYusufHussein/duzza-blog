@@ -19,6 +19,7 @@ import {
 } from "@/lib/exporters";
 import { TiptapEditor } from "@/components/tiptap-editor";
 import { supabase } from "@/integrations/supabase/client";
+import { scheduler } from "@/integrations/scheduler/client";
 
 type ToneProfile = {
   brand_voice: string;
