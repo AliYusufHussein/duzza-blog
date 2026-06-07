@@ -148,7 +148,47 @@ function EditorPage() {
     return d.toISOString().slice(0, 10);
   });
   const [schedChannel, setSchedChannel] = useState("");
+  const [schedChannelId, setSchedChannelId] = useState("");
+  const [toneProfile, setToneProfile] = useState<ToneProfile | null>(null);
   const [schedSending, setSchedSending] = useState(false);
+
+  const { data: channels = [] } = useQuery({
+    queryKey: ["channels", user?.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("channels")
+        .select("id, brand")
+        .order("brand", { ascending: true });
+      if (error) throw error;
+      const seen = new Set<string>();
+      return (data ?? []).filter((c) => {
+        const key = c.brand.trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    },
+    enabled: !!user,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!schedChannelId) {
+      setToneProfile(null);
+      return;
+    }
+    (async () => {
+      const { data } = await supabase
+        .from("tone_profiles")
+        .select("brand_voice, tone_keywords, audience, avoid, sample_line")
+        .eq("channel_id", schedChannelId)
+        .maybeSingle();
+      if (!cancelled) setToneProfile((data as ToneProfile) ?? null);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [schedChannelId]);
 
   async function sendToScheduler() {
     const content = repurposed[activePlatform]?.content;
