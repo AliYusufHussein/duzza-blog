@@ -170,7 +170,11 @@ function EditorPage() {
         .from("channels")
         .select("id, brand")
         .order("brand", { ascending: true });
-      if (error) throw error;
+      console.log("[channels query]", { data, error, userId: user?.id });
+      if (error) {
+        console.error("[channels query error]", error);
+        throw error;
+      }
       const seen = new Set<string>();
       return (data ?? []).filter((c) => {
         const key = c.brand.trim().toLowerCase();
@@ -179,6 +183,7 @@ function EditorPage() {
         return true;
       });
     },
+
     enabled: !!user,
   });
 
