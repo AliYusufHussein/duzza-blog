@@ -418,8 +418,12 @@ function EditorPage() {
       const toneBlock = toneProfile
         ? `CHANNEL TONE PROFILE:\nBrand: ${schedChannel}\nVoice: ${toneProfile.brand_voice}\nTone: ${(toneProfile.tone_keywords ?? []).join(", ")}\nAudience: ${toneProfile.audience}\nAvoid: ${toneProfile.avoid}\nSample line: ${toneProfile.sample_line}\n\nApply this voice consistently. Platform formatting rules still apply.\n\n`
         : "";
+      const elementsSummary = elementsToList(extractedElements).join(", ");
+      const contextBlock = hasExtracted
+        ? `ARTICLE CONTEXT (use as a guide for repurposing):\nHook: ${extractedHook ?? ""}\nHook stat: ${extractedHookStat ?? ""}\nFramework: ${extractedFramework ?? ""}\nKey elements: ${elementsSummary}\nCTA: ${extractedCta ?? ""}\nPrimary keyword: ${extractedKeyword ?? keyword ?? ""}\n\nUse these elements to inform the repurposed output where relevant. Do not copy them verbatim — adapt them to the platform format.\n\n`
+        : "";
       const text = await runAI(
-        `${toneBlock}${PLATFORM_PROMPTS[platform]}`,
+        `${toneBlock}${contextBlock}${PLATFORM_PROMPTS[platform]}`,
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
       const cleaned = cleanRepurposedContent(text);
