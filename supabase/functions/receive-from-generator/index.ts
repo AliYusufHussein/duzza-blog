@@ -34,7 +34,21 @@ Deno.serve(async (req) => {
     return json({ error: "Unauthorized" }, 401);
   }
 
-  const { campaign_id, title, article, extraction } = body;
+  const {
+    campaign_id,
+    title,
+    article,
+    extraction,
+    channel,
+    tone_profile,
+    content_goal,
+    framework,
+    hook,
+    elements,
+    cta,
+    keyword,
+    hook_stat,
+  } = body;
   if (typeof title !== "string" || typeof article !== "string") {
     return json({ error: "Missing required fields: title, article" }, 400);
   }
@@ -44,7 +58,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
   );
 
-  console.log("Inserting:", JSON.stringify({ campaign_id, title: title?.slice(0,50), has_extraction: !!extraction }));
+  console.log("Inserting:", JSON.stringify({ campaign_id, title: title?.slice(0,50), has_extraction: !!extraction, channel, has_tone: !!tone_profile }));
 
   const { data, error } = await supabase
     .from("polisher_inbox")
@@ -53,6 +67,15 @@ Deno.serve(async (req) => {
       title,
       article,
       extraction: extraction ?? null,
+      channel: channel ?? null,
+      tone_profile: tone_profile ?? null,
+      content_goal: content_goal ?? null,
+      framework: framework ?? null,
+      hook: hook ?? null,
+      elements: elements ?? null,
+      cta: cta ?? null,
+      keyword: keyword ?? null,
+      hook_stat: hook_stat ?? null,
       status: "pending",
     })
     .select("id")
