@@ -787,6 +787,16 @@ function EditorPage() {
                 </>
               )}
               <BfButton variant="ghost" onClick={() => setStep(3)}>← Back</BfButton>
+              <BfButton
+                variant="success"
+                onClick={async () => {
+                  await persist({ status: "completed" }, true);
+                  toast.success("Draft marked as finished ✓");
+                  nav({ to: "/dashboard" });
+                }}
+              >
+                ✓ Finished
+              </BfButton>
             </div>
 
             {repurposed[activePlatform] ? (
