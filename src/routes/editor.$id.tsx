@@ -163,6 +163,27 @@ function EditorPage() {
   const [schedChannelId, setSchedChannelId] = useState("");
   const [toneProfile, setToneProfile] = useState<ToneProfile | null>(null);
   const [schedSending, setSchedSending] = useState(false);
+  const [showElements, setShowElements] = useState(true);
+
+  // Extracted elements from generator payload (stored on article)
+  const ax = (article ?? {}) as Record<string, unknown>;
+  const extractedHook = (ax.hook as string | null) ?? null;
+  const extractedFramework = (ax.framework as string | null) ?? null;
+  const extractedElements = (ax.elements as unknown) ?? null;
+  const extractedCta = (ax.cta as string | null) ?? null;
+  const extractedHookStat = (ax.hook_stat as string | null) ?? null;
+  const extractedKeyword = ((ax as { target_keyword?: string }).target_keyword as string | null) ?? null;
+  const payloadChannel = (ax.channel as string | null) ?? null;
+  const payloadToneProfile = (ax.tone_profile as ToneProfile | null) ?? null;
+
+  const hasExtracted = !!(extractedHook || extractedFramework || extractedElements || extractedCta || extractedKeyword || extractedHookStat);
+
+  function elementsToList(el: unknown): string[] {
+    if (!el) return [];
+    if (Array.isArray(el)) return el.map((x) => (typeof x === "string" ? x : JSON.stringify(x)));
+    if (typeof el === "object") return Object.entries(el as Record<string, unknown>).map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+    return [String(el)];
+  }
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels", user?.id],
