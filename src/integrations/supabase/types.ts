@@ -17,9 +17,16 @@ export type Database = {
       articles: {
         Row: {
           category: string
+          channel: string | null
+          content_goal: string | null
           created_at: string
+          cta: string | null
           draft: string
+          elements: Json | null
           formatted: string | null
+          framework: string | null
+          hook: string | null
+          hook_stat: string | null
           id: string
           polished: string | null
           repurposed: Json | null
@@ -29,14 +36,22 @@ export type Database = {
           target_keyword: string
           title: string
           tone: string
+          tone_profile: Json | null
           updated_at: string
           user_id: string
         }
         Insert: {
           category?: string
+          channel?: string | null
+          content_goal?: string | null
           created_at?: string
+          cta?: string | null
           draft?: string
+          elements?: Json | null
           formatted?: string | null
+          framework?: string | null
+          hook?: string | null
+          hook_stat?: string | null
           id?: string
           polished?: string | null
           repurposed?: Json | null
@@ -46,14 +61,22 @@ export type Database = {
           target_keyword?: string
           title?: string
           tone?: string
+          tone_profile?: Json | null
           updated_at?: string
           user_id: string
         }
         Update: {
           category?: string
+          channel?: string | null
+          content_goal?: string | null
           created_at?: string
+          cta?: string | null
           draft?: string
+          elements?: Json | null
           formatted?: string | null
+          framework?: string | null
+          hook?: string | null
+          hook_stat?: string | null
           id?: string
           polished?: string | null
           repurposed?: Json | null
@@ -63,6 +86,7 @@ export type Database = {
           target_keyword?: string
           title?: string
           tone?: string
+          tone_profile?: Json | null
           updated_at?: string
           user_id?: string
         }
@@ -138,29 +162,56 @@ export type Database = {
         Row: {
           article: string
           campaign_id: string | null
+          channel: string | null
+          content_goal: string | null
           created_at: string
+          cta: string | null
+          elements: Json | null
           extraction: Json | null
+          framework: string | null
+          hook: string | null
+          hook_stat: string | null
           id: string
+          keyword: string | null
           status: string
           title: string
+          tone_profile: Json | null
         }
         Insert: {
           article?: string
           campaign_id?: string | null
+          channel?: string | null
+          content_goal?: string | null
           created_at?: string
+          cta?: string | null
+          elements?: Json | null
           extraction?: Json | null
+          framework?: string | null
+          hook?: string | null
+          hook_stat?: string | null
           id?: string
+          keyword?: string | null
           status?: string
           title?: string
+          tone_profile?: Json | null
         }
         Update: {
           article?: string
           campaign_id?: string | null
+          channel?: string | null
+          content_goal?: string | null
           created_at?: string
+          cta?: string | null
+          elements?: Json | null
           extraction?: Json | null
+          framework?: string | null
+          hook?: string | null
+          hook_stat?: string | null
           id?: string
+          keyword?: string | null
           status?: string
           title?: string
+          tone_profile?: Json | null
         }
         Relationships: []
       }

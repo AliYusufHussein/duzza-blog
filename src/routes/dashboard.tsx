@@ -13,6 +13,15 @@ type InboxRow = {
   article: string;
   status: string;
   created_at: string;
+  channel: string | null;
+  tone_profile: unknown;
+  content_goal: string | null;
+  framework: string | null;
+  hook: string | null;
+  elements: unknown;
+  cta: string | null;
+  keyword: string | null;
+  hook_stat: string | null;
 };
 
 type PipelineQueueItem = {
@@ -69,7 +78,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("polisher_inbox" as never)
-        .select("id, title, article, status, created_at")
+        .select("id, title, article, status, created_at, channel, tone_profile, content_goal, framework, hook, elements, cta, keyword, hook_stat")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -93,7 +102,16 @@ function Dashboard() {
           draft: row.article || "",
           status: "draft",
           step: 0,
-        })
+          channel: row.channel ?? null,
+          tone_profile: (row.tone_profile ?? null) as never,
+          content_goal: row.content_goal ?? null,
+          framework: row.framework ?? null,
+          hook: row.hook ?? null,
+          elements: (row.elements ?? null) as never,
+          cta: row.cta ?? null,
+          hook_stat: row.hook_stat ?? null,
+          target_keyword: row.keyword ?? "",
+        } as never)
         .select("*")
         .single();
       if (error) throw error;

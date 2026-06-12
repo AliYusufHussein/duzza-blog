@@ -163,6 +163,27 @@ function EditorPage() {
   const [schedChannelId, setSchedChannelId] = useState("");
   const [toneProfile, setToneProfile] = useState<ToneProfile | null>(null);
   const [schedSending, setSchedSending] = useState(false);
+  const [showElements, setShowElements] = useState(true);
+
+  // Extracted elements from generator payload (stored on article)
+  const ax = (article ?? {}) as Record<string, unknown>;
+  const extractedHook = (ax.hook as string | null) ?? null;
+  const extractedFramework = (ax.framework as string | null) ?? null;
+  const extractedElements = (ax.elements as unknown) ?? null;
+  const extractedCta = (ax.cta as string | null) ?? null;
+  const extractedHookStat = (ax.hook_stat as string | null) ?? null;
+  const extractedKeyword = ((ax as { target_keyword?: string }).target_keyword as string | null) ?? null;
+  const payloadChannel = (ax.channel as string | null) ?? null;
+  const payloadToneProfile = (ax.tone_profile as ToneProfile | null) ?? null;
+
+  const hasExtracted = !!(extractedHook || extractedFramework || extractedElements || extractedCta || extractedKeyword || extractedHookStat);
+
+  function elementsToList(el: unknown): string[] {
+    if (!el) return [];
+    if (Array.isArray(el)) return el.map((x) => (typeof x === "string" ? x : JSON.stringify(x)));
+    if (typeof el === "object") return Object.entries(el as Record<string, unknown>).map(([k, v]) => `${k}: ${typeof v === "string" ? v : JSON.stringify(v)}`);
+    return [String(el)];
+  }
 
   const { data: channels = [] } = useQuery({
     queryKey: ["channels", user?.id],
@@ -191,7 +212,7 @@ function EditorPage() {
   useEffect(() => {
     let cancelled = false;
     if (!schedChannelId) {
-      setToneProfile(null);
+      setToneProfile(payloadToneProfile ?? null);
       return;
     }
     (async () => {
@@ -200,12 +221,12 @@ function EditorPage() {
         .select("brand_voice, tone_keywords, audience, avoid, sample_line")
         .eq("channel_id", schedChannelId)
         .maybeSingle();
-      if (!cancelled) setToneProfile((data as ToneProfile) ?? null);
+      if (!cancelled) setToneProfile((data as ToneProfile) ?? payloadToneProfile ?? null);
     })();
     return () => {
       cancelled = true;
     };
-  }, [schedChannelId]);
+  }, [schedChannelId, payloadToneProfile]);
 
   async function sendToScheduler() {
     const content = repurposed[activePlatform]?.content;
@@ -259,9 +280,20 @@ function EditorPage() {
       setSeo((article.seo_data as SeoData | null) ?? null);
       setFormatted(article.formatted);
       setRepurposed(((article as { repurposed?: RepurposedMap }).repurposed) ?? {});
+      if (payloadChannel) setSchedChannel(payloadChannel);
       setHydrated(true);
     }
-  }, [article, hydrated]);
+  }, [article, hydrated, payloadChannel]);
+
+  // Once channels load, auto-match the payload channel to its id
+  useEffect(() => {
+    if (!schedChannelId && schedChannel && channels.length > 0) {
+      const match = channels.find(
+        (c) => c.brand.trim().toLowerCase() === schedChannel.trim().toLowerCase(),
+      );
+      if (match) setSchedChannelId(match.id);
+    }
+  }, [channels, schedChannel, schedChannelId]);
 
   const saveMut = useMutation({
     mutationFn: (patch: Parameters<typeof updateArticle>[1]) => updateArticle(id, patch),
@@ -386,8 +418,12 @@ function EditorPage() {
       const toneBlock = toneProfile
         ? `CHANNEL TONE PROFILE:\nBrand: ${schedChannel}\nVoice: ${toneProfile.brand_voice}\nTone: ${(toneProfile.tone_keywords ?? []).join(", ")}\nAudience: ${toneProfile.audience}\nAvoid: ${toneProfile.avoid}\nSample line: ${toneProfile.sample_line}\n\nApply this voice consistently. Platform formatting rules still apply.\n\n`
         : "";
+      const elementsSummary = elementsToList(extractedElements).join(", ");
+      const contextBlock = hasExtracted
+        ? `ARTICLE CONTEXT (use as a guide for repurposing):\nHook: ${extractedHook ?? ""}\nHook stat: ${extractedHookStat ?? ""}\nFramework: ${extractedFramework ?? ""}\nKey elements: ${elementsSummary}\nCTA: ${extractedCta ?? ""}\nPrimary keyword: ${extractedKeyword ?? keyword ?? ""}\n\nUse these elements to inform the repurposed output where relevant. Do not copy them verbatim — adapt them to the platform format.\n\n`
+        : "";
       const text = await runAI(
-        `${toneBlock}${PLATFORM_PROMPTS[platform]}`,
+        `${toneBlock}${contextBlock}${PLATFORM_PROMPTS[platform]}`,
         `Title: ${title || "Untitled"}\nTarget keyword: ${keyword || "n/a"}\nTone: ${tone}\nCategory: ${category}\n\nArticle:\n${source}`,
       );
       const cleaned = cleanRepurposedContent(text);
@@ -487,6 +523,49 @@ function EditorPage() {
       </div>
 
       <main className="mx-auto max-w-3xl px-6 py-7">
+        {hasExtracted && (
+          <div className="mb-5 rounded-lg border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setShowElements((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-left"
+            >
+              <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                Article Elements
+              </span>
+              <span className="text-muted-foreground text-xs">{showElements ? "▾" : "▸"}</span>
+            </button>
+            {showElements && (
+              <div className="px-4 pb-4 space-y-2 text-sm">
+                {extractedHook && (
+                  <div><span className="text-muted-foreground text-xs">Hook: </span><span>{extractedHook}</span></div>
+                )}
+                {extractedFramework && (
+                  <div><span className="text-muted-foreground text-xs">Framework: </span><span>{extractedFramework}</span></div>
+                )}
+                {elementsToList(extractedElements).length > 0 && (
+                  <div>
+                    <div className="text-muted-foreground text-xs mb-1">Elements:</div>
+                    <ul className="list-disc pl-5 space-y-0.5">
+                      {elementsToList(extractedElements).map((it, i) => (
+                        <li key={i} className="leading-relaxed">{it}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {extractedCta && (
+                  <div><span className="text-muted-foreground text-xs">CTA: </span><span>{extractedCta}</span></div>
+                )}
+                {extractedKeyword && (
+                  <div><span className="text-muted-foreground text-xs">Keyword: </span><span>{extractedKeyword}</span></div>
+                )}
+                {extractedHookStat && (
+                  <div><span className="text-muted-foreground text-xs">Hook stat: </span><span>{extractedHookStat}</span></div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* STEP 0 */}
         {step === 0 && (
           <div>
