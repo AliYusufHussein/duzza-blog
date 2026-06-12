@@ -102,7 +102,16 @@ function Dashboard() {
           draft: row.article || "",
           status: "draft",
           step: 0,
-        })
+          channel: row.channel ?? null,
+          tone_profile: (row.tone_profile ?? null) as never,
+          content_goal: row.content_goal ?? null,
+          framework: row.framework ?? null,
+          hook: row.hook ?? null,
+          elements: (row.elements ?? null) as never,
+          cta: row.cta ?? null,
+          hook_stat: row.hook_stat ?? null,
+          target_keyword: row.keyword ?? "",
+        } as never)
         .select("*")
         .single();
       if (error) throw error;
