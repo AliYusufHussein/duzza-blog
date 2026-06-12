@@ -280,9 +280,20 @@ function EditorPage() {
       setSeo((article.seo_data as SeoData | null) ?? null);
       setFormatted(article.formatted);
       setRepurposed(((article as { repurposed?: RepurposedMap }).repurposed) ?? {});
+      if (payloadChannel) setSchedChannel(payloadChannel);
       setHydrated(true);
     }
-  }, [article, hydrated]);
+  }, [article, hydrated, payloadChannel]);
+
+  // Once channels load, auto-match the payload channel to its id
+  useEffect(() => {
+    if (!schedChannelId && schedChannel && channels.length > 0) {
+      const match = channels.find(
+        (c) => c.brand.trim().toLowerCase() === schedChannel.trim().toLowerCase(),
+      );
+      if (match) setSchedChannelId(match.id);
+    }
+  }, [channels, schedChannel, schedChannelId]);
 
   const saveMut = useMutation({
     mutationFn: (patch: Parameters<typeof updateArticle>[1]) => updateArticle(id, patch),
