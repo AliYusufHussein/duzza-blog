@@ -13,6 +13,15 @@ type InboxRow = {
   article: string;
   status: string;
   created_at: string;
+  channel: string | null;
+  tone_profile: unknown;
+  content_goal: string | null;
+  framework: string | null;
+  hook: string | null;
+  elements: unknown;
+  cta: string | null;
+  keyword: string | null;
+  hook_stat: string | null;
 };
 
 type PipelineQueueItem = {
