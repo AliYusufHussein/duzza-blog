@@ -78,7 +78,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("polisher_inbox" as never)
-        .select("id, title, article, status, created_at")
+        .select("id, title, article, status, created_at, channel, tone_profile, content_goal, framework, hook, elements, cta, keyword, hook_stat")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
