@@ -523,6 +523,49 @@ function EditorPage() {
       </div>
 
       <main className="mx-auto max-w-3xl px-6 py-7">
+        {hasExtracted && (
+          <div className="mb-5 rounded-lg border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setShowElements((v) => !v)}
+              className="w-full flex items-center justify-between px-4 py-2.5 text-left"
+            >
+              <span className="text-[11px] uppercase tracking-[0.08em] text-muted-foreground">
+                Article Elements
+              </span>
+              <span className="text-muted-foreground text-xs">{showElements ? "▾" : "▸"}</span>
+            </button>
+            {showElements && (
+              <div className="px-4 pb-4 space-y-2 text-sm">
+                {extractedHook && (
+                  <div><span className="text-muted-foreground text-xs">Hook: </span><span>{extractedHook}</span></div>
+                )}
+                {extractedFramework && (
+                  <div><span className="text-muted-foreground text-xs">Framework: </span><span>{extractedFramework}</span></div>
+                )}
+                {elementsToList(extractedElements).length > 0 && (
+                  <div>
+                    <div className="text-muted-foreground text-xs mb-1">Elements:</div>
+                    <ul className="list-disc pl-5 space-y-0.5">
+                      {elementsToList(extractedElements).map((it, i) => (
+                        <li key={i} className="leading-relaxed">{it}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {extractedCta && (
+                  <div><span className="text-muted-foreground text-xs">CTA: </span><span>{extractedCta}</span></div>
+                )}
+                {extractedKeyword && (
+                  <div><span className="text-muted-foreground text-xs">Keyword: </span><span>{extractedKeyword}</span></div>
+                )}
+                {extractedHookStat && (
+                  <div><span className="text-muted-foreground text-xs">Hook stat: </span><span>{extractedHookStat}</span></div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
         {/* STEP 0 */}
         {step === 0 && (
           <div>
