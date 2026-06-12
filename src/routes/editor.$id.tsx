@@ -212,7 +212,7 @@ function EditorPage() {
   useEffect(() => {
     let cancelled = false;
     if (!schedChannelId) {
-      setToneProfile(null);
+      setToneProfile(payloadToneProfile ?? null);
       return;
     }
     (async () => {
@@ -221,12 +221,12 @@ function EditorPage() {
         .select("brand_voice, tone_keywords, audience, avoid, sample_line")
         .eq("channel_id", schedChannelId)
         .maybeSingle();
-      if (!cancelled) setToneProfile((data as ToneProfile) ?? null);
+      if (!cancelled) setToneProfile((data as ToneProfile) ?? payloadToneProfile ?? null);
     })();
     return () => {
       cancelled = true;
     };
-  }, [schedChannelId]);
+  }, [schedChannelId, payloadToneProfile]);
 
   async function sendToScheduler() {
     const content = repurposed[activePlatform]?.content;
