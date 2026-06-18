@@ -22,7 +22,24 @@ type InboxRow = {
   cta: string | null;
   keyword: string | null;
   hook_stat: string | null;
+  extraction: unknown;
 };
+
+function buildElementsFromExtraction(ex: Record<string, unknown> | null | undefined) {
+  if (!ex || typeof ex !== "object") return null;
+  const out: { name: string; output: string }[] = [];
+  for (let i = 1; i <= 20; i++) {
+    const name = ex[`phase_${i}_name`];
+    const output = ex[`phase_${i}_output`];
+    if (typeof name === "string" || typeof output === "string") {
+      out.push({
+        name: typeof name === "string" ? name : `Phase ${i}`,
+        output: typeof output === "string" ? output : "",
+      });
+    }
+  }
+  return out.length ? out : null;
+}
 
 type PipelineQueueItem = {
   pipeline_id: string;
@@ -78,7 +95,7 @@ function Dashboard() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("polisher_inbox" as never)
-        .select("id, title, article, status, created_at, channel, tone_profile, content_goal, framework, hook, elements, cta, keyword, hook_stat")
+        .select("id, title, article, status, created_at, channel, tone_profile, content_goal, framework, hook, elements, cta, keyword, hook_stat, extraction")
         .eq("status", "pending")
         .order("created_at", { ascending: false });
       if (error) throw error;
@@ -94,6 +111,13 @@ function Dashboard() {
         .update({ status: "opened" } as never)
         .eq("id", row.id);
       if (updErr) throw updErr;
+      const ex = (row.extraction ?? null) as Record<string, unknown> | null;
+      const exHook = ex && typeof ex === "object" ? (ex.hook as string | undefined) ?? (ex.headline as string | undefined) : undefined;
+      const exCta = ex && typeof ex === "object" ? (ex.cta as string | undefined) : undefined;
+      const exKeyword = ex && typeof ex === "object" ? (ex.primary_keyword as string | undefined) : undefined;
+      const exFramework = ex && typeof ex === "object" ? (ex.loop_name as string | undefined) : undefined;
+      const exHookStat = ex && typeof ex === "object" ? (ex.trigger as string | undefined) : undefined;
+      const builtElements = buildElementsFromExtraction(ex);
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -105,12 +129,12 @@ function Dashboard() {
           channel: row.channel ?? null,
           tone_profile: (row.tone_profile ?? null) as never,
           content_goal: row.content_goal ?? null,
-          framework: row.framework ?? null,
-          hook: row.hook ?? null,
-          elements: (row.elements ?? null) as never,
-          cta: row.cta ?? null,
-          hook_stat: row.hook_stat ?? null,
-          target_keyword: row.keyword ?? "",
+          framework: row.framework ?? exFramework ?? null,
+          hook: row.hook ?? exHook ?? null,
+          elements: ((row.elements ?? builtElements) ?? null) as never,
+          cta: row.cta ?? exCta ?? null,
+          hook_stat: row.hook_stat ?? exHookStat ?? null,
+          target_keyword: row.keyword ?? exKeyword ?? "",
         } as never)
         .select("*")
         .single();

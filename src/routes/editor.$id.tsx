@@ -605,6 +605,13 @@ function EditorPage() {
               ) : (
                 <BfButton onClick={runPolish} disabled={!draft.trim()}>✦ Polish with AI →</BfButton>
               )}
+              <BfButton
+                variant="ghost"
+                onClick={() => { setPolished(draft); setStep(1); persist({ polished: draft, step: 1 }, true); }}
+                disabled={!draft.trim()}
+              >
+                Use as-is →
+              </BfButton>
               <BfButton variant="ghost" onClick={() => persist()}>Save Draft</BfButton>
             </div>
           </div>
