@@ -111,6 +111,13 @@ function Dashboard() {
         .update({ status: "opened" } as never)
         .eq("id", row.id);
       if (updErr) throw updErr;
+      const ex = (row.extraction ?? null) as Record<string, unknown> | null;
+      const exHook = ex && typeof ex === "object" ? (ex.hook as string | undefined) ?? (ex.headline as string | undefined) : undefined;
+      const exCta = ex && typeof ex === "object" ? (ex.cta as string | undefined) : undefined;
+      const exKeyword = ex && typeof ex === "object" ? (ex.primary_keyword as string | undefined) : undefined;
+      const exFramework = ex && typeof ex === "object" ? (ex.loop_name as string | undefined) : undefined;
+      const exHookStat = ex && typeof ex === "object" ? (ex.trigger as string | undefined) : undefined;
+      const builtElements = buildElementsFromExtraction(ex);
       const { data, error } = await supabase
         .from("articles")
         .insert({
@@ -122,12 +129,12 @@ function Dashboard() {
           channel: row.channel ?? null,
           tone_profile: (row.tone_profile ?? null) as never,
           content_goal: row.content_goal ?? null,
-          framework: row.framework ?? null,
-          hook: row.hook ?? null,
-          elements: (row.elements ?? null) as never,
-          cta: row.cta ?? null,
-          hook_stat: row.hook_stat ?? null,
-          target_keyword: row.keyword ?? "",
+          framework: row.framework ?? exFramework ?? null,
+          hook: row.hook ?? exHook ?? null,
+          elements: ((row.elements ?? builtElements) ?? null) as never,
+          cta: row.cta ?? exCta ?? null,
+          hook_stat: row.hook_stat ?? exHookStat ?? null,
+          target_keyword: row.keyword ?? exKeyword ?? "",
         } as never)
         .select("*")
         .single();
