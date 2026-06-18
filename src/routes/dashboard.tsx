@@ -22,7 +22,24 @@ type InboxRow = {
   cta: string | null;
   keyword: string | null;
   hook_stat: string | null;
+  extraction: unknown;
 };
+
+function buildElementsFromExtraction(ex: Record<string, unknown> | null | undefined) {
+  if (!ex || typeof ex !== "object") return null;
+  const out: { name: string; output: string }[] = [];
+  for (let i = 1; i <= 20; i++) {
+    const name = ex[`phase_${i}_name`];
+    const output = ex[`phase_${i}_output`];
+    if (typeof name === "string" || typeof output === "string") {
+      out.push({
+        name: typeof name === "string" ? name : `Phase ${i}`,
+        output: typeof output === "string" ? output : "",
+      });
+    }
+  }
+  return out.length ? out : null;
+}
 
 type PipelineQueueItem = {
   pipeline_id: string;
