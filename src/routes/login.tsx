@@ -7,12 +7,20 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" ? s.next : undefined,
+  }),
   head: () => ({ meta: [{ title: "Sign in — Blogger Finalizer" }] }),
 });
+
+function safeNext(next: string | undefined) {
+  return next && next.startsWith("/") && !next.startsWith("//") ? next : null;
+}
 
 function LoginPage() {
   const { user, signIn, signUp, loading } = useAuth();
   const nav = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"login" | "register" | "forgot">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,8 +29,13 @@ function LoginPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    if (!loading && user) nav({ to: "/dashboard" });
-  }, [user, loading, nav]);
+    if (!loading && user) {
+      const target = safeNext(next);
+      if (target) window.location.href = target;
+      else nav({ to: "/dashboard" });
+    }
+  }, [user, loading, nav, next]);
+
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
