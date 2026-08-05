@@ -1,0 +1,180 @@
+{
+  "version": 1,
+  "sdk_version": "0.26.1",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://hckpfuipklzyzhkmicuz.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "blogger-finalizer",
+      "version": "0.1.0",
+      "title": "Blogger Finalizer"
+    },
+    "tools": [
+      {
+        "name": "list_articles",
+        "title": "List articles",
+        "description": "List the signed-in user's articles with their id, title, status, workflow step and last update time.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "description": "Optional status filter, e.g. 'draft', 'published' or 'completed'."
+            },
+            "limit": {
+              "type": "integer",
+              "description": "Maximum number of articles to return (default 25)."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_article",
+        "title": "Get article",
+        "description": "Fetch one of the signed-in user's articles by id, including the draft, polished text, SEO data and repurposed platform content.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The article id."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_article",
+        "title": "Create article",
+        "description": "Create a new draft article for the signed-in user with an optional title, draft body and target keyword.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Article title."
+            },
+            "draft": {
+              "type": "string",
+              "description": "Raw draft body text."
+            },
+            "target_keyword": {
+              "type": "string",
+              "description": "Primary SEO keyword."
+            },
+            "category": {
+              "type": "string",
+              "description": "Article category."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "update_article",
+        "title": "Update article",
+        "description": "Update fields on one of the signed-in user's articles, such as the title, draft, polished text, status or workflow step.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The article id to update."
+            },
+            "title": {
+              "type": "string",
+              "description": "New title."
+            },
+            "draft": {
+              "type": "string",
+              "description": "New raw draft body."
+            },
+            "polished": {
+              "type": "string",
+              "description": "New polished body."
+            },
+            "status": {
+              "type": "string",
+              "description": "New status, e.g. 'draft', 'published' or 'completed'."
+            },
+            "step": {
+              "type": "integer",
+              "description": "Workflow step index (0 = draft)."
+            },
+            "target_keyword": {
+              "type": "string",
+              "description": "New primary SEO keyword."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "delete_article",
+        "title": "Delete article",
+        "description": "Permanently delete one of the signed-in user's articles by id.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "description": "The article id to delete."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
