@@ -66,7 +66,10 @@ function LoginPage() {
         setError(res.error);
       } else {
         toast.success(mode === "login" ? "Welcome back!" : "Account created!");
-        nav({ to: "/dashboard" });
+        const target = safeNext(next);
+        if (target) window.location.href = target;
+        else nav({ to: "/dashboard" });
+
       }
     } finally {
       setBusy(false);
