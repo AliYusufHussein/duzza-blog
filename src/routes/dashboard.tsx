@@ -66,7 +66,7 @@ function Dashboard() {
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (!authLoading && !user) nav({ to: "/login" });
+    if (!authLoading && !user) nav({ to: "/login", search: {} });
   }, [user, authLoading, nav]);
 
   const { data: articles = [], isLoading } = useQuery({
@@ -221,7 +221,7 @@ function Dashboard() {
         </Link>
         <div className="flex items-center gap-3">
           <span className="text-xs text-muted-foreground">👤 {user.email}</span>
-          <BfButton variant="ghost" onClick={() => { signOut(); nav({ to: "/login" }); }} className="px-3 py-1.5 text-xs">
+          <BfButton variant="ghost" onClick={() => { signOut(); nav({ to: "/login", search: {} }); }} className="px-3 py-1.5 text-xs">
             Sign Out
           </BfButton>
         </div>
