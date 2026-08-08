@@ -129,7 +129,7 @@ function EditorPage() {
   const qc = useQueryClient();
 
   useEffect(() => {
-    if (!authLoading && !user) nav({ to: "/login", search: {} });
+    if (!authLoading && !user) nav({ to: "/login", search: { next: undefined } });
   }, [user, authLoading, nav]);
 
   const { data: article, isLoading } = useQuery({

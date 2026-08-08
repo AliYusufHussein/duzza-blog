@@ -94,7 +94,7 @@ function ResetPasswordPage() {
           )}
         </Card>
         <div className="mt-4 text-center">
-          <Link to="/login" search={{}} className="text-xs text-muted-foreground hover:text-foreground">
+          <Link to="/login" search={{ next: undefined }} className="text-xs text-muted-foreground hover:text-foreground">
             ← Back to sign in
           </Link>
         </div>
