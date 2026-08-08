@@ -61,4 +61,4 @@ export function Field({ label, children }: { label?: string; children: ReactNode
 }
 
 export const inputClass =
-  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-accent transition-colors";
+  "w-full rounded-lg border border-border bg-card px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-accent transition-colors [color-scheme:dark] [&>option]:bg-card [&>option]:text-foreground";
