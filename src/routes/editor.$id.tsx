@@ -254,8 +254,8 @@ function EditorPage() {
       });
       const bodyText = await res.text();
       if (res.ok) {
-        toast.success(`Sent to Pipeline ✓ (${res.status})`, {
-          description: bodyText || "(empty body)",
+        toast.success(`Sent: ${platformLabel}`, {
+          description: `Status ${res.status} · ${bodyText || "(empty body)"}`,
         });
         setShowScheduler(false);
       } else {
