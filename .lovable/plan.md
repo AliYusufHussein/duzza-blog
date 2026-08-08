@@ -1,39 +1,22 @@
-## Plan
+# Fix: channel options invisible in the Send to Pipeline dropdown
 
-### 1. Parse extraction JSON in `dashboard.tsx` (Option B)
+## What's happening
 
-In `openInboxMut`, select the `extraction` column from `polisher_inbox` and map nested values into article columns when individual flat fields are missing. Mapping:
+The channels are still loading correctly. The console log from your current session shows the query returning all 14 brands (Allif Institute, CyberSpace, Duzza Tv, FlashFit, ...) with no error.
 
-- `hook` ← `row.hook ?? extraction.hook ?? extraction.headline`
-- `cta` ← `row.cta ?? extraction.cta`
-- `target_keyword` ← `row.keyword ?? extraction.primary_keyword ?? ""`
-- `framework` ← `row.framework ?? extraction.loop_name`
-- `hook_stat` ← `row.hook_stat ?? extraction.trigger`
-- `elements` ← `row.elements ?? buildElementsFromPhases(extraction)` — collect `phase_*_name` / `phase_*_output` pairs into an array of `{ name, output }`
-- `channel`, `tone_profile`, `content_goal` ← unchanged (no extraction fallback)
+The problem is visual: the `<select>` uses light text on a dark app background, but the native dropdown list that the browser/OS pops open renders on its own (usually white) background. The inherited light text then sits on white, so the list looks empty even though every option is there.
 
-Also extend the `select(...)` list and `InboxRow` type to include `extraction: unknown`.
+## Fix
 
-No edge function changes — the generator already sends `extraction` and it's already stored.
+Presentation-only change, in the dropdown markup and shared input styles:
 
-### 2. "Use as-is" button in Polish step (step 0) of `editor.$id.tsx`
+- Give each `<option>` an explicit dark background and light text so the popup list is legible regardless of OS theme.
+- Add `color-scheme: dark` to the select styling so the browser renders its native popup with dark chrome.
+- Apply the same treatment to the other selects on the editor (Tone, Category) so they don't have the same latent issue.
 
-In the step 0 button row (around line 602–609), add a third button next to `✦ Polish with AI →` and `Save Draft`:
+No changes to the channels query, the Scheduler client, or any send-to-pipeline logic.
 
-```tsx
-<BfButton
-  variant="ghost"
-  onClick={() => { setPolished(draft); setStep(1); persist({ polished: draft, step: 1 }, true); }}
-  disabled={!draft.trim()}
->
-  Use as-is →
-</BfButton>
-```
+## Technical detail
 
-This copies the current draft into `polished`, advances to step 1, and persists — skipping AI polish entirely. The user can still edit the polished text in step 1 before continuing.
-
-### Files changed
-- `src/routes/dashboard.tsx` — extraction fallback mapping in `openInboxMut`
-- `src/routes/editor.$id.tsx` — add "Use as-is" button in step 0
-
-No DB migration, no edge function changes.
+- `src/components/bf-ui.tsx`: extend the shared input/select class with `[color-scheme:dark]` and an option-level rule (`[&>option]:bg-card [&>option]:text-foreground`).
+- `src/routes/editor.$id.tsx`: no logic edits; the channel/tone/category selects pick up the styling automatically.
