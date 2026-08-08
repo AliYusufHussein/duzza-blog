@@ -236,19 +236,21 @@ function EditorPage() {
     setSchedSending(true);
     try {
       const platformLabel = PLATFORMS.find((p) => p.id === activePlatform)?.label ?? activePlatform;
+      const payload = {
+        article_id: id,
+        channel: schedChannel,
+        platform: platformLabel,
+        content,
+        date: schedDate,
+        source: "polisher",
+        secret: "duzza_polisher_secret_2026",
+        title,
+      };
+      console.log("[sendToScheduler] payload:", payload);
       const res = await fetch(TRACKER_WEBHOOK_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          article_id: id,
-          channel: schedChannel,
-          platform: platformLabel,
-          content,
-          date: schedDate,
-          source: "polisher",
-          secret: "duzza_polisher_secret_2026",
-          title,
-        }),
+        body: JSON.stringify(payload),
       });
       const bodyText = await res.text();
       if (res.ok) {
