@@ -844,21 +844,30 @@ function EditorPage() {
                     <input type="date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} className={inputClass} />
                   </Field>
                   <Field label="Channel">
-                    <select
-                      value={schedChannelId}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        setSchedChannelId(id);
-                        const c = channels.find((ch) => ch.id === id);
-                        setSchedChannel(c?.brand ?? "");
-                      }}
-                      className={inputClass}
-                    >
-                      <option value="">Select a channel...</option>
-                      {channels.map((c) => (
-                        <option key={c.id} value={c.id}>{c.brand}</option>
-                      ))}
-                    </select>
+                    <div className="rounded-lg border border-border bg-card max-h-56 overflow-y-auto">
+                      {channels.length === 0 ? (
+                        <div className="px-3.5 py-2.5 text-sm text-muted-foreground">Loading channels...</div>
+                      ) : (
+                        channels.map((c) => {
+                          const active = schedChannelId === c.id;
+                          return (
+                            <button
+                              key={c.id}
+                              type="button"
+                              onClick={() => {
+                                setSchedChannelId(c.id);
+                                setSchedChannel(c.brand);
+                              }}
+                              className={`block w-full text-left px-3.5 py-2.5 text-sm transition-colors ${
+                                active ? "bg-secondary text-accent" : "text-foreground hover:bg-secondary/60"
+                              }`}
+                            >
+                              {active ? "✓ " : ""}{c.brand}
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
                   </Field>
                   <div className="flex justify-end gap-2 mt-3">
                     <BfButton variant="ghost" onClick={() => setShowScheduler(false)} disabled={schedSending}>Cancel</BfButton>
