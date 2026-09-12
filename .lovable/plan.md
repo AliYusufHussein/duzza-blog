@@ -1,101 +1,113 @@
-# Duzza Content Polisher — Full Audit + Fix Plan
+# Duzza Content Polisher — Development Review (12 Sep 2026)
 
-Honest status, verified against the live code and database today. Where something is untested, it says so.
+Based on the audit already run against the live code and database. Where something is untested, it says so. Items with no real data (budget, team velocity, code coverage, uptime) are marked "not tracked" rather than invented.
 
-## 1. Stack and architecture
+## App overview
 
-Implemented: React 19 + TypeScript + TanStack Start/Router + Tailwind v4 + shadcn components + Lovable Cloud (Supabase) + Tiptap editor + AI through the Lovable AI gateway (Gemini 2.5 Flash default). Export uses DOCX/PDF/ZIP libraries. An agent (MCP) connector is live at `/mcp` with OAuth.
+- Name: Duzza Content Polisher (shown in-app as "Blogger Finalizer").
+- Problem it solves: raw AI-generated drafts arrive unpolished and in one format. The app turns a draft into a publish-ready blog post and then into posts for 10 social platforms, in one guided flow.
+- Users: you and your content team — a single operator today, one account exists.
+- Platform: web, works in a phone browser. No app store build.
 
-Backend is fully connected: 41 articles, 28 inbox items, 1 user account. No database linter issues.
+## Current status
 
-Oddities: `nitro` is pinned to a beta version and `jspdf` to an unusual major; both build fine today but are worth pinning deliberately. The app also talks to **two outside projects** — one for channels/tone profiles, one for the pipeline — and the addresses don't agree (see §7).
+- Overall: ~80% toward a usable v1 for one operator; ~60% for a public multi-user product.
+- Phase: feature-complete build, now in hardening and cleanup before launch.
 
-## 2. Login and access control
+## Completed
 
-- Email sign-up/sign-in, password reset, and reset-password screens all work end to end.
-- Protection is **client-side only**. `/dashboard` and `/editor/:id` check the session inside the page and then redirect. No data leaks (queries wait for a signed-in user), but a signed-out visitor sees a flash of the app shell instead of an immediate bounce to login.
-- There are no roles or permission levels — every signed-in user is a full user. Single-account app today.
-- Private screens are indexable by search engines (no "noindex") and reuse the public preview text.
+- Email sign-up, sign-in, password reset — working end to end.
+- Inbox intake from the Generator (28 items received).
+- 5-step flow: Polish (with a "use as-is" skip), SEO, Blogger-ready HTML, Preview, Repurpose.
+- Repurposing to 10 platforms with rich-text editing.
+- Exports: copy, HTML, DOCX, PDF, carousel image ZIP.
+- Send to Pipeline, plus a Finished button that closes a draft.
+- Article history: 41 articles (39 drafts, 1 completed, 1 published).
+- Agent (MCP) access with 5 article tools, scoped to your account.
 
-## 3. Screen-by-screen status
+## In progress
 
-| Screen | State | Notes |
-|---|---|---|
-| Home redirect | Built | Sends everyone to My Articles |
-| Login / Reset password | Built | Real backend, no gaps |
-| My Articles (dashboard) | Built | Real data. Inbox works (28 items). "From Pipeline" calls an outside address that no longer matches the one the editor posts to — unverified whether it still responds |
-| Editor step 1 Polish | Built | AI polish + "Use as-is" |
-| Step 2 SEO | Built | AI output is parsed without validation; a malformed reply can blank the SEO panel |
-| Step 3 Format | Built | Blogger-ready HTML |
-| Step 4 Preview | Built | Copy, HTML, DOCX, PDF |
-| Step 5 Repurpose | Built | 10 platforms, Tiptap editing, carousel images, Send to Pipeline, Finished button |
-| Agent connector (MCP) | Built | 5 article tools, OAuth-scoped per user |
+Fixing the issues the audit surfaced. Nothing half-built is visible to you in the app; the open work is security, reliability and phone polish. Estimated 1–2 working sessions for the critical items, 3–4 for the full list.
 
-No mock or placeholder data anywhere; everything reads the real backend.
+## Pending work, in priority order
 
-## 4. Feature audit
+1. Most critical: lock the Inbox down so only your own items are readable. Today any signed-in account could read every incoming article.
+2. Next: settle one correct Pipeline address — the "From Pipeline" list and "Send to Pipeline" point at two different outside projects, so that queue may silently always be empty.
+3. Show Pipeline send failures instead of silently swallowing them.
+4. Remove debug logging that prints article content in the browser.
+5. Handle a bad AI reply on the SEO step with a retry instead of a blank panel.
+6. Make carousel slide detection tolerant of any AI wording.
+7. Move the shared Pipeline password and both outside addresses out of the app's own code.
+8. Bounce signed-out visitors before the page draws, and keep private screens out of search results.
+9. Phone polish: bigger tap targets, header wrapping when the email is long, a scroll hint on the step strip.
+10. Remove the unused pipeline table and dead scaffolding.
 
-- Article intake from Generator inbox — Done
-- 5-step polish workflow — Done
-- Channel + tone profile driven prompts — Partial: the channel list lives in the other project and reads as anonymous; the two channel tables inside this app are empty, so nothing falls back if the outside project is unreachable
-- Repurposing to 10 platforms — Done
-- Exports (copy/HTML/DOCX/PDF/carousel ZIP) — Done
-- Send to Pipeline — Partial: address mismatch between the two screens; shared password sits in the app's own code
-- Draft/Finished lifecycle — Done (39 drafts, 1 completed, 1 published)
-- Pipeline table inside this app — Missing/dead: 0 rows, nothing writes to it any more
-- Agent/MCP access — Done
-- Roles, teams, sharing — Missing (not requested so far)
+Needs testing: Pipeline round-trip (send and receive) against the correct project; the carousel ZIP; each of the 10 platform outputs; sign-out redirect; the whole flow on a real phone.
 
-## 5. Database audit
+Must-have before release: items 1–4 above, plus a confirmed working Pipeline connection.
 
-- `articles` (41) — fully wired, owner-only access. Correct.
-- `polisher_inbox` (28) — **security problem**: every signed-in user can read every row. Also not in the generated types, so the code bypasses type safety with casts.
-- `pipeline` (0) — orphaned; no code writes to it since sending moved to the webhook.
-- `channels` (0) and `tone_profiles` (0) — empty here; the app reads the equivalents from the outside scheduler project instead.
-- Hardcoded in the front end that shouldn't be: two outside project addresses, the shared pipeline password, and the AI model name.
+## Milestones
 
-## 6. Phone experience
+- Next milestone: "secure and reliable v1" — items 1–4 done and the Pipeline round-trip verified.
+- Then: phone polish and cleanup (items 5–10).
 
-Works, with rough edges: the delete "×" and the Tiptap toolbar buttons are smaller than a comfortable thumb target; the header can crowd when the email address is long; the 5-step progress strip needs sideways scrolling with no hint; the channel picker rows are borderline tappable; preview boxes use fixed heights that waste space on tall phones. Nothing is broken — untested on a real device, judged from the layout code.
+## Next focus
 
-## 7. Known bugs and broken flows
+- Primary goal: close the Inbox security hole and make the Pipeline connection trustworthy.
+- Secondary goals: silence debug logging, harden AI-response handling, phone tap targets.
 
-1. Inbox is readable by any signed-in user (security).
-2. "From Pipeline" points at a different outside project than "Send to Pipeline" — one of them is stale, so that queue may silently always be empty.
-3. Opening a pipeline item ignores failures completely (`.catch(() => {})`), so it can report success when nothing was sent.
-4. Debug `console.log` lines still print article payloads in the browser.
-5. Carousel image export throws unless the AI happens to write "Slide 1", "Slide 2" — fragile.
-6. SEO step trusts the AI to return valid JSON.
-7. Signed-out flash on protected screens.
-8. No console errors observed in the current preview session.
+## Success metrics
 
-TypeScript compiles clean with zero errors.
+MVP
+- Core features required: intake, polish, SEO, format, preview/export, repurpose, send to Pipeline, article history, login. All present.
+- Current status: ~80%.
+- MVP criteria met: not yet — blocked on the Inbox permission fix and a verified Pipeline connection.
 
-## 8. Launch readiness
+Ideal outcome
+- Feature completeness: target includes roles/sharing and configurable channels; currently single-user with channels read from an outside project.
+- Performance: no benchmarks measured. AI steps depend on the model's response time; everything else loads fast in the preview.
+- User experience: desktop is comfortable; phone works but is cramped in places.
 
-Roughly **80% toward a usable v1** for a single operator; ~60% if you mean multi-user and publicly launchable.
+Quality standards
+- Automated test coverage: none today (no test suite). Bug tracking is this review.
+- Known open issues: 7 (listed above). No console errors in the current preview session; code compiles clean.
+- Uptime/response time: not tracked.
 
-Fix plan, in priority order:
+## Risks
 
-1. Lock down the inbox so only your own items are readable.
-2. Settle one correct pipeline address and use it in both places.
-3. Surface pipeline send failures instead of swallowing them.
-4. Remove the debug logging.
-5. Validate the SEO reply and show a clear retry instead of a blank panel.
-6. Make carousel slide detection tolerant of any AI phrasing.
-7. Move the pipeline password and both outside addresses into secrets/config rather than app code.
-8. Redirect signed-out visitors before the page renders, and mark private screens noindex.
-9. Phone polish: bigger tap targets, header wrapping, progress-strip scroll hint.
-10. Drop the unused `pipeline` table and unused scaffold code; decide whether channels live here or in the other project.
+- Biggest risk: the app depends on two outside projects plus a shared password baked into the browser code. If an address changes or the password leaks, intake and sending break silently — and anyone reading the published page could post into your pipeline.
+- The channel and tone list lives in the other project with no local fallback, so an outage empties the channel picker.
+- AI replies are trusted to be well-formed; malformed output blanks the SEO panel or breaks carousel export.
+- Single account, no roles — adding a teammate today gives them everything.
 
-Descope for speed: roles/teams/sharing, and the empty local channel tables.
+## Action items
 
-Biggest risk: the app depends on **two outside Supabase projects plus a shared password baked into the browser bundle**. If either address changes or that password leaks, intake and sending break with no fallback and no alerting — and anyone reading the published page's code can post into your pipeline.
+Immediate
+- Restrict Inbox reads to the owner.
+- Pick the correct Pipeline address, use it in both places, and verify a real send and receive.
 
-## Technical notes
+Short term
+- Surface send failures, remove debug logs, validate the SEO reply, move secrets out of app code.
+- Phone pass on tap targets and the step strip; keep private screens unindexed.
 
-- Auth guards are `useEffect` redirects in `src/routes/dashboard.tsx:68` and `src/routes/editor.$id.tsx:131`; move to an `_authenticated` layout.
-- `PIPELINE_*` constants at `src/routes/dashboard.tsx:54-56` vs `TRACKER_WEBHOOK_URL` at `src/routes/editor.$id.tsx:34` disagree on project ref.
-- Remove the `authenticated_read_polisher_inbox` `USING (true)` policy; add owner scoping or keep intake service-role-only.
-- Regenerate Supabase types so `polisher_inbox` stops needing `as never` casts.
-- Dead: `src/hooks/use-mobile.tsx`, unused shadcn `sidebar.tsx`/`table.tsx`, `public.pipeline`.
+## Notes and decisions
+
+- Backend, auth, storage and AI all run on Lovable Cloud; AI defaults to a fast Gemini model.
+- Pipeline sending moved from a direct database write to a webhook — which is why the local pipeline table is now dead.
+- Channels and tone profiles are deliberately read from the scheduler project, not duplicated here.
+- The channel picker was rebuilt as an in-app list because the browser's native dropdown rendered unusably.
+- Agent (MCP) access was added and is scoped per signed-in user.
+
+## Follow-up review
+
+- Review period: the previous audit was produced in the last session; this is a restatement in review form, so no new work has landed since. Days since last review: 0.
+- Nothing has changed in scope, priorities, bug counts or timeline since that audit.
+- No user feedback collected yet beyond your own use.
+- Not tracked and not estimated here: team velocity, budget, burn rate, code coverage percentages, launch date.
+- Next review: after the immediate actions above are done — focus on confirming the Inbox lockdown and a verified Pipeline round-trip.
+
+## Pending decisions for you
+
+- Do channels and tone profiles stay in the scheduler project, or move into this app so it works standalone?
+- Will this stay a single-operator tool, or do we add teammates and roles before launch?
+- Which Pipeline address is the live one?
