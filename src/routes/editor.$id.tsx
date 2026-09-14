@@ -287,15 +287,15 @@ function EditorPage() {
     }
   }, [article, hydrated, payloadChannel]);
 
-  // Once channels load, auto-match the payload channel to its id
+  // Keep schedChannel in sync if the loaded list no longer contains the previously selected brand
   useEffect(() => {
-    if (!schedChannelId && schedChannel && channels.length > 0) {
+    if (schedChannel && channels.length > 0) {
       const match = channels.find(
         (c) => c.brand.trim().toLowerCase() === schedChannel.trim().toLowerCase(),
       );
-      if (match) setSchedChannelId(match.id);
+      if (!match) setSchedChannel("");
     }
-  }, [channels, schedChannel, schedChannelId]);
+  }, [channels, schedChannel]);
 
   const saveMut = useMutation({
     mutationFn: (patch: Parameters<typeof updateArticle>[1]) => updateArticle(id, patch),
