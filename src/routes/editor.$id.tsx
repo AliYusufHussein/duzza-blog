@@ -849,13 +849,12 @@ function EditorPage() {
                         <div className="px-3.5 py-2.5 text-sm text-muted-foreground">Loading channels...</div>
                       ) : (
                         channels.map((c) => {
-                          const active = schedChannelId === c.id;
+                          const active = schedChannel === c.brand;
                           return (
                             <button
-                              key={c.id}
+                              key={c.brand}
                               type="button"
                               onClick={() => {
-                                setSchedChannelId(c.id);
                                 setSchedChannel(c.brand);
                               }}
                               className={`block w-full text-left px-3.5 py-2.5 text-sm transition-colors ${
