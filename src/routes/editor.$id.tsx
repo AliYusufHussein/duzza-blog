@@ -186,15 +186,15 @@ function EditorPage() {
   }
 
   const { data: channels = [] } = useQuery({
-    queryKey: ["channels", user?.id],
+    queryKey: ["channels_public", user?.id],
     queryFn: async () => {
       const { data, error } = await scheduler
-        .from("channels")
-        .select("id, brand")
+        .from("channels_public")
+        .select("brand, platform, category, link, status")
         .order("brand", { ascending: true });
-      console.log("[channels query]", { data, error, userId: user?.id });
+      console.log("[channels_public query]", { data, error, userId: user?.id });
       if (error) {
-        console.error("[channels query error]", error);
+        console.error("[channels_public query error]", error);
         throw error;
       }
       const seen = new Set<string>();
