@@ -186,15 +186,15 @@ function EditorPage() {
   }
 
   const { data: channels = [] } = useQuery({
-    queryKey: ["channels", user?.id],
+    queryKey: ["channels_public", user?.id],
     queryFn: async () => {
       const { data, error } = await scheduler
-        .from("channels")
-        .select("id, brand")
+        .from("channels_public")
+        .select("brand, platform, category, link, status")
         .order("brand", { ascending: true });
-      console.log("[channels query]", { data, error, userId: user?.id });
+      console.log("[channels_public query]", { data, error, userId: user?.id });
       if (error) {
-        console.error("[channels query error]", error);
+        console.error("[channels_public query error]", error);
         throw error;
       }
       const seen = new Set<string>();
@@ -287,15 +287,15 @@ function EditorPage() {
     }
   }, [article, hydrated, payloadChannel]);
 
-  // Once channels load, auto-match the payload channel to its id
+  // Keep schedChannel in sync if the loaded list no longer contains the previously selected brand
   useEffect(() => {
-    if (!schedChannelId && schedChannel && channels.length > 0) {
+    if (schedChannel && channels.length > 0) {
       const match = channels.find(
         (c) => c.brand.trim().toLowerCase() === schedChannel.trim().toLowerCase(),
       );
-      if (match) setSchedChannelId(match.id);
+      if (!match) setSchedChannel("");
     }
-  }, [channels, schedChannel, schedChannelId]);
+  }, [channels, schedChannel]);
 
   const saveMut = useMutation({
     mutationFn: (patch: Parameters<typeof updateArticle>[1]) => updateArticle(id, patch),
@@ -849,13 +849,12 @@ function EditorPage() {
                         <div className="px-3.5 py-2.5 text-sm text-muted-foreground">Loading channels...</div>
                       ) : (
                         channels.map((c) => {
-                          const active = schedChannelId === c.id;
+                          const active = schedChannel === c.brand;
                           return (
                             <button
-                              key={c.id}
+                              key={c.brand}
                               type="button"
                               onClick={() => {
-                                setSchedChannelId(c.id);
                                 setSchedChannel(c.brand);
                               }}
                               className={`block w-full text-left px-3.5 py-2.5 text-sm transition-colors ${
