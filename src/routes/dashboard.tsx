@@ -51,8 +51,8 @@ type PipelineQueueItem = {
   created_at: string;
 };
 
-const PIPELINE_QUEUE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/serve-polisher-queue";
-const PIPELINE_RECEIVE_URL = "https://ckuqonmxezoscasdbjhm.supabase.co/functions/v1/receive-from-polisher";
+const PIPELINE_QUEUE_URL = "https://bdslxjkfnziyyqomtzso.supabase.co/functions/v1/serve-polisher-queue";
+const PIPELINE_RECEIVE_URL = "https://bdslxjkfnziyyqomtzso.supabase.co/functions/v1/receive-from-polisher";
 const PIPELINE_SECRET = "duzza_polisher_secret_2026";
 
 export const Route = createFileRoute("/dashboard")({
@@ -180,7 +180,7 @@ function Dashboard() {
         .single();
       if (error) throw error;
       const today = new Date().toISOString().slice(0, 10);
-      await fetch(PIPELINE_RECEIVE_URL, {
+      const receiveRes = await fetch(PIPELINE_RECEIVE_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -190,7 +190,11 @@ function Dashboard() {
           platform: item.platform,
           date: today,
         }),
-      }).catch(() => {});
+      });
+      if (!receiveRes.ok) {
+        const receiveBody = await receiveRes.text();
+        throw new Error(`Pipeline receive failed (${receiveRes.status}): ${receiveBody || "unknown error"}`);
+      }
       return data;
     },
     onSuccess: (a) => {
