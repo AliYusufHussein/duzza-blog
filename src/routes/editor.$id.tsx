@@ -190,7 +190,7 @@ function EditorPage() {
     queryFn: async () => {
       const { data, error } = await scheduler
         .from("channels_public")
-        .select("brand, platform, category, link, status")
+        .select("id, brand, platform, category, link, status")
         .order("brand", { ascending: true });
       console.log("[channels_public query]", { data, error, userId: user?.id });
       if (error) {
@@ -287,13 +287,17 @@ function EditorPage() {
     }
   }, [article, hydrated, payloadChannel]);
 
-  // Keep schedChannel in sync if the loaded list no longer contains the previously selected brand
+  // Map the selected brand back to its channel id (for the tone-profile lookup)
   useEffect(() => {
     if (schedChannel && channels.length > 0) {
       const match = channels.find(
         (c) => c.brand.trim().toLowerCase() === schedChannel.trim().toLowerCase(),
       );
-      if (!match) setSchedChannel("");
+      if (match) setSchedChannelId(match.id);
+      else {
+        setSchedChannel("");
+        setSchedChannelId("");
+      }
     }
   }, [channels, schedChannel]);
 
@@ -852,9 +856,10 @@ function EditorPage() {
                           const active = schedChannel === c.brand;
                           return (
                             <button
-                              key={c.brand}
+                              key={c.id}
                               type="button"
                               onClick={() => {
+                                setSchedChannelId(c.id);
                                 setSchedChannel(c.brand);
                               }}
                               className={`block w-full text-left px-3.5 py-2.5 text-sm transition-colors ${
